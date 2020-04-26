@@ -1,135 +1,136 @@
-///**
-//  ******************************************************************************
-//  * @file    stm32f0xx_hal_msp.c
-//  * @author  IPC Rennes
-//  * @version V1.0.0
-//  * @date    April 24th, 2017
-//  * @brief   HAL MSP module.
-//  ******************************************************************************
-//  *
-//  * COPYRIGHT(c) 2015 STMicroelectronics
-//  *
-//  * Redistribution and use in source and binary forms, with or without modification,
-//  * are permitted provided that the following conditions are met:
-//  *   1. Redistributions of source code must retain the above copyright notice,
-//  *      this list of conditions and the following disclaimer.
-//  *   2. Redistributions in binary form must reproduce the above copyright notice,
-//  *      this list of conditions and the following disclaimer in the documentation
-//  *      and/or other materials provided with the distribution.
-//  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-//  *      may be used to endorse or promote products derived from this software
-//  *      without specific prior written permission.
-//  *
-//  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-//  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-//  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-//  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-//  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-//  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-//  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-//  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-//  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-//  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//  *
-//  ******************************************************************************
-//  */
-///* Includes ------------------------------------------------------------------*/
-//#include "main_32F0.h"
-//#include "stm32f0xx_hal.h"
-//
-///* Imported variables --------------------------------------------------------*/
-//extern SIXSTEP_Base_InitTypeDef SIXSTEP_parameters;
-//extern SIXSTEP_PI_PARAM_InitTypeDef_t PI_parameters;
-//
-///* Private variables ---------------------------------------------------------*/
-//#ifdef TEST
-//extern uint8_t stop;
-//#endif
-//
-///* Private function prototypes -----------------------------------------------*/
-//extern void MC_TIMx_SixStep_timebase(void);
-//extern void MC_SixStep_NEXT_step(int32_t);
-//extern void MC_SysTick_SixStep_MediumFrequencyTask(void);
-//#ifdef HALL_SENSORS
-//extern void MC_ADCx_SixStep_User(void);
-//extern void MC_TIMx_SixStep_CommutationEvent(void);
-//extern void MC_SixStep_TABLE(uint8_t step_number);
-//extern void MC_SixStep_Hall_Startup_Failure_Handler(void);
-//extern void MC_SixStep_Hall_Run_Failure_Handler(void);
-//#else
-//extern void MC_ADCx_SixStep_Bemf(void);
-//#endif
-//extern void UART_Send_Reply(void);
-//
-///** @defgroup MSP_module
-//  * @brief HAL MSP module.
-//  * @{
-//  */
-//
-///* Private functions ---------------------------------------------------------*/
-//
-///** @defgroup HAL_MSP_Private_Functions
-//  * @{
-//  */
-//
-///**
-//  * @brief     Initializes the Global MSP
-//  * @retval    None
-//  */
-//void HAL_MspInit(void)
-//{
-//  /* System interrupt init*/
-//  /* SysTick_IRQn interrupt configuration */
-//  HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
-//}
-//
-//#if (!defined(HALL_SENSORS)||defined(POTENTIOMETER))
-///**
-//  * @brief     Initializes the ADC MSP.
-//  * @param[in] hadc ADC handle pointer
-//  * @retval    None
-//  */
-//void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
-//{
-//  GPIO_InitTypeDef GPIO_InitStruct;
-//  if(hadc->Instance==BSP_SIP_ADCx)
-//  {
-//    /* Peripheral clock enable */
-//    BSP_SIP_ADCx_CLK_ENABLE();
-//
-//    /* GPIOs Clocks Enable */
-//    BSP_SIP_ADCx_GPIO_CLK_ENABLE();
-//
-//#ifdef BSP_BOARD_ADCx_GPIOA
-//    /* GPIO Port Clock Enable */
-//    __GPIOA_CLK_ENABLE();
-//    /* GPIOs Init */
-//    GPIO_InitStruct.Pin = BSP_BOARD_ADCx_GPIOA;
-//    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-//    GPIO_InitStruct.Pull = GPIO_NOPULL;
-//    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-//#endif
-//
-//#ifdef BSP_BOARD_ADCx_GPIOB
-//    /* GPIO Port Clock Enable */
-//    __GPIOB_CLK_ENABLE();
-//    /* GPIOs Init */
-//    GPIO_InitStruct.Pin = BSP_BOARD_ADCx_GPIOB;
-//    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-//    GPIO_InitStruct.Pull = GPIO_NOPULL;
-//    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-//#endif
-//
-//    /* System interrupt init*/
-//    HAL_NVIC_SetPriority(BSP_SIP_ADCx_IRQn, BSP_SIP_ADCx_PRIORITY, 0);
-//    HAL_NVIC_EnableIRQ(BSP_SIP_ADCx_IRQn);
-//
-//    /* Configuration of ADC channels */
-//    BSP_BOARD_ADC_INIT();
-//  }
-//}
-//#endif
-//
+/**
+  ******************************************************************************
+  * @file    stm32f0xx_hal_msp.c
+  * @author  IPC Rennes
+  * @version V1.0.0
+  * @date    April 24th, 2017
+  * @brief   HAL MSP module.    
+  ******************************************************************************
+  *
+  * COPYRIGHT(c) 2015 STMicroelectronics
+  *
+  * Redistribution and use in source and binary forms, with or without modification,
+  * are permitted provided that the following conditions are met:
+  *   1. Redistributions of source code must retain the above copyright notice,
+  *      this list of conditions and the following disclaimer.
+  *   2. Redistributions in binary form must reproduce the above copyright notice,
+  *      this list of conditions and the following disclaimer in the documentation
+  *      and/or other materials provided with the distribution.
+  *   3. Neither the name of STMicroelectronics nor the names of its contributors
+  *      may be used to endorse or promote products derived from this software
+  *      without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+  ******************************************************************************
+  */
+/* Includes ------------------------------------------------------------------*/
+#include "main_32F0.h"
+#include "stm32f0xx_hal.h"
+#include "MC_common.h"
+
+/* Imported variables --------------------------------------------------------*/
+extern SIXSTEP_Base_InitTypeDef SIXSTEP_parameters;
+extern SIXSTEP_PI_PARAM_InitTypeDef_t PI_parameters;
+
+/* Private variables ---------------------------------------------------------*/
+#ifdef TEST
+extern uint8_t stop;
+#endif
+
+/* Private function prototypes -----------------------------------------------*/
+extern void MC_TIMx_SixStep_timebase(void);
+extern void MC_SixStep_NEXT_step(int32_t);
+extern void MC_SysTick_SixStep_MediumFrequencyTask(void);
+#ifdef HALL_SENSORS
+extern void MC_ADCx_SixStep_User(void);
+extern void MC_TIMx_SixStep_CommutationEvent(void);
+extern void MC_SixStep_TABLE(uint8_t step_number);
+extern void MC_SixStep_Hall_Startup_Failure_Handler(void);
+extern void MC_SixStep_Hall_Run_Failure_Handler(void);
+#else
+extern void MC_ADCx_SixStep_Bemf(void);
+#endif
+extern void UART_Send_Reply(void);
+
+/** @defgroup MSP_module
+  * @brief HAL MSP module.
+  * @{
+  */
+
+/* Private functions ---------------------------------------------------------*/
+
+/** @defgroup HAL_MSP_Private_Functions
+  * @{
+  */
+
+/**
+  * @brief     Initializes the Global MSP 
+  * @retval    None
+  */
+void HAL_MspInit(void)
+{
+  /* System interrupt init*/
+  /* SysTick_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(SysTick_IRQn, 3, 0);
+}
+
+#if (!defined(HALL_SENSORS)||defined(POTENTIOMETER))
+/**
+  * @brief     Initializes the ADC MSP.
+  * @param[in] hadc ADC handle pointer
+  * @retval    None
+  */
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if(hadc->Instance==BSP_SIP_ADCx)
+  { 
+    /* Peripheral clock enable */
+    BSP_SIP_ADCx_CLK_ENABLE();
+    
+    /* GPIOs Clocks Enable */
+    BSP_SIP_ADCx_GPIO_CLK_ENABLE();
+
+#ifdef BSP_BOARD_ADCx_GPIOA
+    /* GPIO Port Clock Enable */
+    __GPIOA_CLK_ENABLE();    
+    /* GPIOs Init */
+    GPIO_InitStruct.Pin = BSP_BOARD_ADCx_GPIOA;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+#endif
+    
+#ifdef BSP_BOARD_ADCx_GPIOB
+    /* GPIO Port Clock Enable */
+    __GPIOB_CLK_ENABLE();
+    /* GPIOs Init */
+    GPIO_InitStruct.Pin = BSP_BOARD_ADCx_GPIOB;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+#endif
+    
+    /* System interrupt init*/ 
+    HAL_NVIC_SetPriority(BSP_SIP_ADCx_IRQn, BSP_SIP_ADCx_PRIORITY, 0);
+    HAL_NVIC_EnableIRQ(BSP_SIP_ADCx_IRQn);
+    
+    /* Configuration of ADC channels */
+    BSP_BOARD_ADC_INIT();
+  }
+}
+#endif
+
 //#if (!defined(HALL_SENSORS)||defined(POTENTIOMETER))
 ///**
 //  * @brief     DeInitializes the ADC MSP.
@@ -600,5 +601,5 @@
 ///**
 //  * @}
 //  */
-//
-///************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

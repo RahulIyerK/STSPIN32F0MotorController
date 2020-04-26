@@ -17,23 +17,20 @@
 				<configuration artifactExtension="elf" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" errorParsers="org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GmakeErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.CWDLocator;org.eclipse.cdt.core.GCCErrorParser" id="fr.ac6.managedbuild.config.gnu.cross.exe.debug.506893099" name="Debug" parent="fr.ac6.managedbuild.config.gnu.cross.exe.debug" postannouncebuildStep="Generating binary and Printing size information:" postbuildStep="arm-none-eabi-objcopy -O binary &quot;${BuildArtifactFileBaseName}.elf&quot; &quot;${BuildArtifactFileBaseName}.bin&quot;; arm-none-eabi-size &quot;${BuildArtifactFileName}&quot;" preannouncebuildStep="" prebuildStep="">
 					<folderInfo id="fr.ac6.managedbuild.config.gnu.cross.exe.debug.506893099." name="/" resourcePath="">
 						<toolChain errorParsers="" id="fr.ac6.managedbuild.toolchain.gnu.cross.exe.debug.397529920" name="Ac6 STM32 MCU GCC" nonInternalBuilderId="fr.ac6.managedbuild.builder.gnu.cross" superClass="fr.ac6.managedbuild.toolchain.gnu.cross.exe.debug">
-							<option id="fr.ac6.managedbuild.option.gnu.cross.mcu.1294537846" name="Mcu" superClass="fr.ac6.managedbuild.option.gnu.cross.mcu" value="STM32F031C6Tx" valueType="string"/>
-							<option id="fr.ac6.managedbuild.option.gnu.cross.board.1516640076" name="Board" superClass="fr.ac6.managedbuild.option.gnu.cross.board" value="STEVAL-SPIN3202" valueType="string"/>
+							<option id="fr.ac6.managedbuild.option.gnu.cross.mcu.1294537846" name="Mcu" superClass="fr.ac6.managedbuild.option.gnu.cross.mcu" useByScannerDiscovery="false" value="STM32F031C6Tx" valueType="string"/>
+							<option id="fr.ac6.managedbuild.option.gnu.cross.board.1516640076" name="Board" superClass="fr.ac6.managedbuild.option.gnu.cross.board" useByScannerDiscovery="false" value="STEVAL-SPIN3202" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="fr.ac6.managedbuild.targetPlatform.gnu.cross.974975151" isAbstract="false" osList="all" superClass="fr.ac6.managedbuild.targetPlatform.gnu.cross"/>
 							<builder autoBuildTarget="all" buildPath="${workspace_loc:/STSPIN32F0_Uart}/Debug" cleanBuildTarget="clean" id="org.eclipse.cdt.build.core.internal.builder.1252965299" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="org.eclipse.cdt.build.core.internal.builder"/>
 							<tool command="gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.1566867098" name="MCU GCC Compiler" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler">
 								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level.884671968" name="Optimization Level" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="fr.ac6.managedbuild.gnu.c.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.465227299" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1137319956" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Middlewares/ST/MC_6Step_Lib/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Projects/Multi/Examples/MotionControl/STEVAL-SPIN3202/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/STEVAL-SPIN3202&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/Components/stspin32f0&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Middlewares/MC_6Step_Lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/User/Inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Drivers/BSP/STEVAL-SPIN3202&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/Components/Common&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/STM32F0xx_HAL_Driver/Inc&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Drivers/STM32F0xx_HAL_Driver/Inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/CMSIS/Device/ST/STM32F0xx/Include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/CMSIS/Include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Middlewares/ST/UART_serial_com/Inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\Inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\..\..\Drivers\BSP\Components\stspin32f0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\..\..\Drivers\BSP\Components\Common&quot;"/>
@@ -44,6 +41,9 @@
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\..\..\Middlewares\ST\MC_6Step_Lib\Inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;..\..\..\..\..\..\..\..\Middlewares\ST\UART_serial_com\Inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}\User&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Drivers/CMSIS/Include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Drivers/BSP/Components&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Middlewares/UART_serial_com&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1523561211" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -79,7 +79,7 @@
 								<option id="gnu.cpp.compiler.option.debugging.level.2138232454" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 							</tool>
 							<tool command="gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="fr.ac6.managedbuild.tool.gnu.cross.c.linker.1852188149" name="MCU GCC Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.linker">
-								<option id="gnu.c.link.option.ldflags.1780354150" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="--specs=nano.specs --specs=nosys.specs" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.1780354150" name="Linker flags" superClass="gnu.c.link.option.ldflags" useByScannerDiscovery="false" value="--specs=nano.specs --specs=nosys.specs" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.173456426" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -88,17 +88,7 @@
 							<tool id="fr.ac6.managedbuild.tool.gnu.cross.cpp.linker.922128031" name="MCU G++ Linker" superClass="fr.ac6.managedbuild.tool.gnu.cross.cpp.linker"/>
 							<tool id="fr.ac6.managedbuild.tool.gnu.archiver.1145138333" name="MCU GCC Archiver" superClass="fr.ac6.managedbuild.tool.gnu.archiver"/>
 							<tool command="as" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GASErrorParser" id="fr.ac6.managedbuild.tool.gnu.cross.assembler.951435512" name="MCU GCC Assembler" superClass="fr.ac6.managedbuild.tool.gnu.cross.assembler">
-								<option id="gnu.both.asm.option.include.paths.2002466321" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Projects/Multi/Examples/MotionControl/STEVAL-SPIN3202/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/Components/stspin32f0&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Middlewares/ST/MC_6Step_Lib/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/STM32F0xx_HAL_Driver/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/CMSIS/Device/ST/STM32F0xx/Include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/STEVAL-SPIN3202&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/BSP/Components/Common&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Middlewares/ST/UART_serial_com/Inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/Lib/Drivers/CMSIS/Include&quot;"/>
-								</option>
+								<option id="gnu.both.asm.option.include.paths.2002466321" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" useByScannerDiscovery="false" valueType="includePath"/>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1648610723" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.assembler.input.311830916" superClass="fr.ac6.managedbuild.tool.gnu.cross.assembler.input"/>
 							</tool>

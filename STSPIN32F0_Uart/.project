@@ -66,6 +66,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>User/Inc</name>
+			<type>2</type>
+			<locationURI>PROJECT_LOC/Inc</locationURI>
+		</link>
+		<link>
 			<name>User/main_32F0.c</name>
 			<type>1</type>
 			<locationURI>PROJECT_LOC/User/main_32F0.c</locationURI>
@@ -91,9 +96,19 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>Drivers/CMSIS/Inc</name>
+			<type>2</type>
+			<locationURI>PROJECT_LOC/Drivers/CMSIS/Include</locationURI>
+		</link>
+		<link>
 			<name>Drivers/CMSIS/system_stm32f0xx.c</name>
 			<type>1</type>
 			<locationURI>PROJECT_LOC/Drivers/CMSIS/system_stm32f0xx.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/STM32F0xx_HAL_Driver/Inc</name>
+			<type>2</type>
+			<locationURI>PROJECT_LOC/Drivers/STM32F0xx_HAL_Driver/Inc</locationURI>
 		</link>
 		<link>
 			<name>Drivers/STM32F0xx_HAL_Driver/stm32f0xx_hal.c</name>
@@ -176,6 +191,11 @@
 			<locationURI>PROJECT_LOC/Middlewares/MC_6Step_Lib/6Step_Lib.c</locationURI>
 		</link>
 		<link>
+			<name>Middlewares/MC_6Step_Lib/6Step_Lib.h</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/Middlewares/MC_6Step_Lib/6Step_Lib.h</locationURI>
+		</link>
+		<link>
 			<name>Middlewares/UART_serial_com/UART_UI.c</name>
 			<type>1</type>
 			<locationURI>PROJECT_LOC/Middlewares/UART_serial_com/UART_UI.c</locationURI>
@@ -186,9 +206,19 @@
 			<locationURI>PROJECT_LOC/Drivers/BSP/Components/stspin32f0.c</locationURI>
 		</link>
 		<link>
+			<name>Drivers/BSP/Components/stspin32f0.h</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/Drivers/BSP/Components/stspin32f0.h</locationURI>
+		</link>
+		<link>
 			<name>Drivers/BSP/STEVAL-SPIN3202/STEVAL-SPIN3202.c</name>
 			<type>1</type>
 			<locationURI>PROJECT_LOC/Drivers/BSP/STEVAL-SPIN3202/STEVAL-SPIN3202.c</locationURI>
+		</link>
+		<link>
+			<name>Drivers/BSP/STEVAL-SPIN3202/STEVAL-SPIN3202.h</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/Drivers/BSP/STEVAL-SPIN3202/STEVAL-SPIN3202.h</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
