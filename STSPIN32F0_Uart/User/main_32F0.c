@@ -60,7 +60,9 @@ static void MX_REFx_Init(void);
 #endif
 static void MX_LF_TIMx_Init(void);
 static void MX_UART_Init(void);
+uint32_t test_ADC_read();
 
+uint32_t bemf;
 int main(void)
 {
 
@@ -92,11 +94,16 @@ int main(void)
   MC_SixStep_INIT();
   /****************************************************************************/  
   
+
+
   /* Infinite loop */
 
+  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);           //TIM1_CH1 ENABLE
+  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);           //TIM1_CH1 ENABLE
+  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);           //TIM1_CH1 ENABLE
 
-  uint32_t bemf;
-  while (1)
+
+    while (1)
   {
 /*! **************************************************************************
   ==============================================================================   
