@@ -98,9 +98,9 @@ int main(void)
 
   /* Infinite loop */
 
-  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);           //TIM1_CH1 ENABLE
-  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);           //TIM1_CH1 ENABLE
-  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);           //TIM1_CH1 ENABLE
+//  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);           //TIM1_CH1 ENABLE
+//  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);           //TIM1_CH1 ENABLE
+//  HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);           //TIM1_CH1 ENABLE
 
 
     while (1)
@@ -145,9 +145,18 @@ int main(void)
   *****************************************************************************/    
    bemf = test_ADC_read();
    
-   HF_TIMx_SetDutyCycle_CH1(0);
-   HF_TIMx_SetDutyCycle_CH2(0);
-   HF_TIMx_SetDutyCycle_CH3(0);
+   HAL_TIM_PWM_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);
+   HAL_TIM_PWM_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);
+   HAL_TIM_PWM_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);
+
+   HAL_TIMEx_PWMN_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH1) ;
+   HAL_TIMEx_PWMN_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH2) ;
+   HAL_TIMEx_PWMN_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3) ;
+
+//   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
+//   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_RESET);
+//   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_15,GPIO_PIN_RESET);
+
 
   /****************************************************************************/
   }
