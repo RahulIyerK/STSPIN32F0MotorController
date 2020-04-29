@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32f031x6.s
+  * @file      startup_stm32f030x6.s
   * @author    MCD Application Team
-  * @brief     STM32F031x4/STM32F031x6 devices vector table for GCC toolchain.
+  * @brief     STM32F030x4/STM32F030x6 devices vector table for GCC toolchain.
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -139,7 +139,7 @@ g_pfnVectors:
   .word  PendSV_Handler
   .word  SysTick_Handler
   .word  WWDG_IRQHandler                   /* Window WatchDog              */
-  .word  PVD_IRQHandler                    /* PVD through EXTI Line detect */
+  .word  0                                 /* Reserved                     */
   .word  RTC_IRQHandler                    /* RTC through the EXTI line    */
   .word  FLASH_IRQHandler                  /* FLASH                        */
   .word  RCC_IRQHandler                    /* RCC                          */
@@ -153,7 +153,7 @@ g_pfnVectors:
   .word  ADC1_IRQHandler                   /* ADC1                         */
   .word  TIM1_BRK_UP_TRG_COM_IRQHandler    /* TIM1 Break, Update, Trigger and Commutation */
   .word  TIM1_CC_IRQHandler                /* TIM1 Capture Compare         */
-  .word  TIM2_IRQHandler                   /* TIM2                         */
+  .word  0                                 /* Reserved                     */
   .word  TIM3_IRQHandler                   /* TIM3                         */
   .word  0                                 /* Reserved                     */
   .word  0                                 /* Reserved                     */
@@ -197,9 +197,6 @@ g_pfnVectors:
   .weak      WWDG_IRQHandler
   .thumb_set WWDG_IRQHandler,Default_Handler
 
-  .weak      PVD_IRQHandler
-  .thumb_set PVD_IRQHandler,Default_Handler
-
   .weak      RTC_IRQHandler
   .thumb_set RTC_IRQHandler,Default_Handler
 
@@ -235,9 +232,6 @@ g_pfnVectors:
 
   .weak      TIM1_CC_IRQHandler
   .thumb_set TIM1_CC_IRQHandler,Default_Handler
-
-  .weak      TIM2_IRQHandler
-  .thumb_set TIM2_IRQHandler,Default_Handler
 
   .weak      TIM3_IRQHandler
   .thumb_set TIM3_IRQHandler,Default_Handler
