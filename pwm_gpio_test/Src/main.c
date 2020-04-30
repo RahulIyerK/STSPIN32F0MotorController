@@ -58,55 +58,6 @@ static void MX_TIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-//ch1 is PA8, HS1
-//ch2 is PA9, HS2
-//ch3 is PA10, HS3
-
-//ch1n is PB13, LS1
-//CH2N is PB14, LS2
-//CH3N is PB15, LS3
-
-void test1(){
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);
-}
-
-void test1_1(){
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);
-
-}
-
-void test1_2(){
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
-
-}
-
-//HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
-void test2(){
-  HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_15,GPIO_PIN_RESET);
-
-	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -276,10 +227,22 @@ static void MX_TIM1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_SET);
+
+  /*Configure GPIO pins : PF6 PF7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
 }
 
