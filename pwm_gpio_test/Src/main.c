@@ -64,6 +64,50 @@ static void MX_TIM1_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+
+void test1(){//test low side switching, high side open
+  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
+
+	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
+}
+
+void test1_1(){ //test set duty before start
+  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
+
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
+	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
+
+}
+
+
+void test1_2(){ //test set duty after start
+  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
+
+	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
+
+
+}
+
+//HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
+void test2(){ //test high side switching, low side open
+  HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
+	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB,GPIO_PIN_15,GPIO_PIN_RESET);
+
+	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+}
+
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -95,6 +139,9 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  test2();
+
   while (1)
   {
     /* USER CODE END WHILE */
