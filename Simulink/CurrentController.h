@@ -7,7 +7,7 @@
 
 struct PI_params_S
 {
-    double Ki;
+    double Ki ;
     double Kp;
     double Ka;
     double integ_acc;
@@ -15,8 +15,6 @@ struct PI_params_S
     double va_limited;
 };
 
-struct PI_params_S Iloop_params;
-
-uint16_t PI_Iloop(double isamp, double iref, double bemf_estimation, double motor_vsupply);
+int PI_Iloop(double isamp, double iref, double bemf_estimation, double motor_vsupply);
 
 #endif //CURRENT_CONTROLLER_H

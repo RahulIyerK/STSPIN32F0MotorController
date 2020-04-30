@@ -57,7 +57,7 @@ Tpwm = Ts * (2*count_max+1);
 
 %--------------------------------------------------------------------------%
 
-test_bemf = 1;
+test_bemf = 4;
 
 iref = 1; % 1 A reference current
 
@@ -67,3 +67,14 @@ Vsupply = 12;
 
 test_fixed_duty = (iref * R + test_bemf) / Vsupply;% should be such that average current is iref
 test_fixed_duty_comp = ceil(test_fixed_duty * count_max);
+
+%--------------------------------------------------------------------------%
+%controller design
+
+fpwm = 1/Tpwm;
+fc = (1/25)*fpwm;
+wc = 2 * pi * fc;
+
+Kp = wc * L;
+Ki = wc * R;
+Ka = 1/Kp;
