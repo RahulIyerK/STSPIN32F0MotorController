@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f0xx_hal_adc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -41,7 +42,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc;
+ADC_HandleTypeDef hadc;//ADC1 for BEMF
 
 TIM_HandleTypeDef htim1;
 
@@ -102,13 +103,41 @@ void test2(){ //test high side switching, low side open
 
 	HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
 }
+
+/******************************************************//**
+ * @brief     Select the new ADC Channel
+ * @param[in] adc_ch 
+ * @retval    None
+ **********************************************************/
+void ADC_Channel(uint32_t adc_ch)
+{ 
+#ifdef HALL_SENSORS
+  __HAL_ADC_ENABLE_IT(&hadc, (ADC_IT_EOC | ADC_IT_EOS | ADC_IT_OVR));
+#endif
+  hadc.Instance->CR |= ADC_CR_ADSTP;
+  while(hadc.Instance->CR & ADC_CR_ADSTP);   
+  /* Regular sequence configuration */
+  /* Set the channel selection register from the selected channel */
+  hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
+  hadc.Instance->CR |= ADC_CR_ADSTART;
+}    
+
+
+uint32_t bemf_val;
+
+uint32_t test_ADC_read(){
+	ADC_Channel(ADC_CHANNEL_0);
+	uint32_t bemf = HAL_ADC_GetValue(&hadc);
+	return bemf;
+}
+
+
 /* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
-
 
 
 int main(void)
@@ -145,10 +174,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   test2();
+  ADC_Channel(ADC_CHANNEL_1);
 
   while (1)
   {
     /* USER CODE END WHILE */
+
+	  bemf_val = test_ADC_read();
+
+	  sleep(100);
 
     /* USER CODE BEGIN 3 */
   }
