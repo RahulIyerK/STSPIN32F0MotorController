@@ -1,4 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
+ADC.ContinuousConvMode=ENABLE
+ADC.IPParameters=ContinuousConvMode
 File.Version=6
 GPIO.groupedBy=
 KeepUserPlacement=false
