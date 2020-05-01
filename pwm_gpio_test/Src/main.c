@@ -174,13 +174,15 @@ int main(void)
   HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
   HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
 
-  ADC_Channel(ADC_CHANNEL_1);
+  HAL_ADC_Start (&hadc);
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  HAL_ADC_PollForConversion (&hadc, 1000);
 
 	  bemf_val = test_ADC_read();
 
@@ -389,7 +391,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PF6 PF7 */
   GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
