@@ -2,3 +2,4 @@ Debug/
 RemoteSystemsTempFiles/
 .settings/
 .metadata/
+*Debug.cfg
