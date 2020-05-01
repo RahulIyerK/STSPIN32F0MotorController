@@ -173,7 +173,9 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  test2();
+  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
+
   ADC_Channel(ADC_CHANNEL_1);
 
   while (1)
