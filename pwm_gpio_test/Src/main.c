@@ -179,11 +179,14 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-  HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
+//  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+//  HAL_TIMEx_PWMN_Stop(&htim1,TIM_CHANNEL_1);
+
   HAL_TIM_Base_Start_IT(&htim3);
+  //TEST: maybe we don't need to use the interrupt start for the timer since technically that doesn't trigger interrupts?
+  //HAL_TIM_Base_Start(&htim3);
 
-
+  //this was for the old code; don't use since we start the ADC with DMA now
 //  HAL_ADC_Start (&hadc);
 
   while (1)
