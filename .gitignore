@@ -3,3 +3,5 @@ RemoteSystemsTempFiles/
 .settings/
 .metadata/
 *Debug.cfg
+**/.mxproject
+**/*.xml
