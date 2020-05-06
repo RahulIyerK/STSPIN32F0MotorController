@@ -129,14 +129,16 @@ void ADC_Channel(uint32_t adc_ch)
 
 
 uint32_t bemf_val;
+uint32_t counter;
+volatile uint32_t adc_buffer[100] = {0};
+volatile uint32_t start_tim[100] = {0};
+volatile uint32_t end_tim[100] = {0};
 
-uint32_t test_ADC_read(){
-	ADC_Channel(ADC_CHANNEL_0);
-	uint32_t bemf = HAL_ADC_GetValue(&hadc);
-	return bemf;
+void test_ADC_read(){
+	ADC_Channel(ADC_CHANNEL_2);
+	adc_buffer[counter] = HAL_ADC_GetValue(&hadc);
 }
 
-volatile uint32_t adc_buffer[3] = {0};
 
 /* USER CODE END 0 */
 
@@ -450,12 +452,17 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 //	  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
 //	  i = 1;
 //	}
+	if (counter < 100)
+	{
+		start_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
+		test_ADC_read();
 
-HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
-	test_ADC_read();
-	HAL_Delay(1000);
 //	i = !i;
-	PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
+//		PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
+		end_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
+		counter++;
+	}
+
 }
 
 
