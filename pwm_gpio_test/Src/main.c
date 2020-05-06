@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32f0xx_hal_adc.h"
+#include "CurrentController.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -449,10 +450,15 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+
+//just some dummy variables to test the control loop
+double isamp, iref, bemf_estimation, motor_vsupply;
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
 
 	HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
+	PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
 }
 
 
