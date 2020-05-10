@@ -164,7 +164,13 @@ void TIM3_IRQHandler(void)
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
-  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
+  if(c_counter < 100){
+	  c_tim[2 * c_counter] = __HAL_TIM_GET_COUNTER(&htim14);
+	  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
+	  //TODO: check if rahul wants to change this
+	  PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
+	  c_tim[2 * c_counter] = __HAL_TIM_GET_COUNTER(&htim14);
+  }
   /* USER CODE END TIM3_IRQn 1 */
 }
 

@@ -46,6 +46,7 @@ ADC_HandleTypeDef hadc;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
 
@@ -57,6 +58,7 @@ static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM14_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -111,6 +113,7 @@ void test2(){ //test high side switching, low side open
 
 }
 
+
 /******************************************************//**
  * @brief     Select the new ADC Channel
  * @param[in] adc_ch 
@@ -134,11 +137,16 @@ uint32_t bemf_val;
 uint32_t counter;
 volatile uint32_t adc_buffer[100] = {0};
 volatile uint32_t start_tim[100] = {0};
-volatile uint32_t end_tim[100] = {0};
+volatile uint32_t end_tim[200] = {0};
+
+
+volatile uint32_t c_counter; //counter for current loop characterization
+volatile uint32_t c_tim[200] = {0};
+
 
 void test_ADC_read(){
 	ADC_Channel(ADC_CHANNEL_2);
-	adc_buffer[counter] = HAL_ADC_GetValue(&hadc);
+	adc_buffer[c_counter] = HAL_ADC_GetValue(&hadc);
 }
 
 
@@ -151,7 +159,7 @@ void test_ADC_read(){
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	c_counter = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -175,6 +183,7 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC_Init();
   MX_TIM3_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
 //  HAL_ADC_Start_DMA(&hadc, (uint32_t*)&adc_buffer, 3);
@@ -185,6 +194,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   test2();
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start(&htim14);
 
   while (1)
   {
@@ -436,6 +447,37 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 0;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 9;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -487,29 +529,18 @@ static void MX_GPIO_Init(void)
 //just some dummy variables to test the control loop
 double isamp, iref, bemf_estimation, motor_vsupply;
 
-int i = 0;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
 
-//	if (i)
-//	{
-//	  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
-//	  i = 0;
-//	}
-//	else
-//	{
-//	  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
-//	  i = 1;
-//	}
+
 	if (counter < 100)
 	{
-		start_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
+//		start_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
 		test_ADC_read();
 
-//	i = !i;
 //		PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
-		end_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
-		counter++;
+//		end_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
+//		counter++;
 	}
 
 }
