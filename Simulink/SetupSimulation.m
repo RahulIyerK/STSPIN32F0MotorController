@@ -45,15 +45,20 @@ D_1 = A_1/A_0;
 
 %--------------------------------------------------------------------------%
 
-count_max = 500-1;
+% switching frequency counter
+count_max = 500-1; 
 temp = [0:count_max];
 fliptemp = flip(temp);
 triangle_vals = [temp fliptemp(1,2:(count_max+1))];
 
 
-triangle_times = Ts.*[1:(2*count_max+1)];
-
 Tpwm = Ts * (2*count_max+1);
+
+% control loop frequency counter
+
+control_cycle_samples = 4; % number of current samples per current control cycle
+% current sampled when counter == count_max
+control_cycle_count_max = (count_max + 1) * control_cycle_samples - 1;
 
 %--------------------------------------------------------------------------%
 

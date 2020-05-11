@@ -1,7 +1,7 @@
 #include "CurrentController.h"
 #include <math.h>
-struct PI_params_S Iloop_params = {12579, 62.8947, 0.0159, 0, 0, 0};
-int PI_Iloop(double isamp, double iref, double bemf_estimation, double motor_vsupply)
+double Iloop_error_acc = 0;
+int PI_Iloop(double isamp, double isamp1, double isamp2, double isamp3, double iref, double bemf_estimation, double motor_vsupply)
 {
     // isamp: latest current sample
     // iref:  current control reference
@@ -9,29 +9,34 @@ int PI_Iloop(double isamp, double iref, double bemf_estimation, double motor_vsu
     // motor_vsupply: DC supply across 3-phase H-bridge
 
     double error = iref - isamp;
-    Iloop_params.integ_acc += (error - Iloop_params.Ka * (Iloop_params.va - Iloop_params.va_limited))/I_SAMPLE_RATE;
+    double error1 = iref - isamp1;
+    double error2 = iref - isamp2;
+    double error3 = iref - isamp3;
 
-    double iterm = Iloop_params.Ki * Iloop_params.integ_acc;
-    double pterm = Iloop_params.Kp * error;
-    Iloop_params.va = iterm + pterm + bemf_estimation; //PI term summation + feedforward term from bemf estimation
+    Iloop_error_acc += (error + error1 + error2 + error3)/I_SAMPLE_RATE;
+
+    double iterm = ICONTROL_KI * Iloop_error_acc;
+    double pterm = ICONTROL_KP * error;
+    double va = iterm + pterm; //+ bemf_estimation; //PI term summation + feedforward term from bemf estimation
 
     // saturation
-    if (Iloop_params.va > I_CONTROL_MAX_V)
+    if (va > I_CONTROL_MAX_V)
     {
-        Iloop_params.va_limited = I_CONTROL_MAX_V;
+        va = I_CONTROL_MAX_V;
     }
-    else 
+    else if (va < 0)
     {
-        Iloop_params.va_limited = Iloop_params.va;
+        va  = 0; 
     }
 
     //on-time duty
 
-    double duty = Iloop_params.va_limited/motor_vsupply;
+    double duty = va /motor_vsupply;
 
     //result pwm register compare value depends on how on-time is defined with respect to it
 
     int pwm_compare_val = PWM_COUNTER_MAX - ((int)(round(duty * PWM_COUNTER_MAX))); 
 
     return pwm_compare_val;
+
 }
