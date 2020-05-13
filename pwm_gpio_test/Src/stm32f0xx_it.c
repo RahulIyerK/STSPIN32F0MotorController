@@ -23,6 +23,7 @@
 #include "stm32f0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "CurrentController.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +43,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern double isamp, iref, bemf_estimation, motor_vsupply;
+extern uint32_t c_counter;
+extern uint32_t * c_tim;
+extern TIM_HandleTypeDef htim14;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -169,7 +173,8 @@ void TIM3_IRQHandler(void)
 	  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
 	  //TODO: check if rahul wants to change this
 	  PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
-	  c_tim[2 * c_counter] = __HAL_TIM_GET_COUNTER(&htim14);
+	  c_tim[2 * c_counter + 1] = __HAL_TIM_GET_COUNTER(&htim14);
+	  c_counter++;
   }
   /* USER CODE END TIM3_IRQn 1 */
 }

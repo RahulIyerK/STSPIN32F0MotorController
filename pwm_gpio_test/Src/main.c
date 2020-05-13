@@ -136,7 +136,7 @@ void ADC_Channel(uint32_t adc_ch)
 uint32_t bemf_val;
 uint32_t counter;
 volatile uint32_t adc_buffer[100] = {0};
-volatile uint32_t start_tim[100] = {0};
+//volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
 volatile uint32_t end_tim[200] = {0};
 
 
@@ -196,7 +196,6 @@ int main(void)
   test2();
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start(&htim14);
-
   while (1)
   {
     /* USER CODE END WHILE */
@@ -527,7 +526,7 @@ static void MX_GPIO_Init(void)
 
 
 //just some dummy variables to test the control loop
-double isamp, iref, bemf_estimation, motor_vsupply;
+volatile double isamp, iref, bemf_estimation, motor_vsupply;
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
@@ -540,7 +539,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
 //		PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
 //		end_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
-//		counter++;
+		counter++;
 	}
 
 }
