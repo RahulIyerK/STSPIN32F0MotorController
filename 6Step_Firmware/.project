@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>pwm_gpio_test</name>
-	<comment />
+	<name>6Step_Firmware</name>
+	<comment></comment>
 	<projects>
 	</projects>
 	<buildSpec>

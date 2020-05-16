@@ -141,7 +141,7 @@ volatile uint32_t end_tim[200] = {0};
 
 
 volatile uint32_t c_counter; //counter for current loop characterization
-volatile uint32_t c_tim[200] = {0};
+volatile uint32_t c_tim[200];
 
 
 void test_ADC_read(){
@@ -195,7 +195,7 @@ int main(void)
 
   test2();
   HAL_TIM_Base_Start_IT(&htim3);
-  HAL_TIM_Base_Start(&htim14);
+  HAL_TIM_Base_Start_IT(&htim14);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -461,9 +461,9 @@ static void MX_TIM14_Init(void)
 
   /* USER CODE END TIM14_Init 1 */
   htim14.Instance = TIM14;
-  htim14.Init.Prescaler = 0;
+  htim14.Init.Prescaler = 1000-1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 9;
+  htim14.Init.Period = 500-1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
