@@ -1,0 +1,8 @@
+Debug/
+RemoteSystemsTempFiles/
+.settings/
+.metadata/
+*Debug.cfg
+*Debug*.cfg
+**/.mxproject
+*.xml

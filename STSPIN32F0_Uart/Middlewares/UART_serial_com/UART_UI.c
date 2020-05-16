@@ -333,63 +333,63 @@ void UART_Send_Reply()
   *  @{
     * @brief UART Main function
 */
-void UART_Set_Value()
-{ 
-  uint8_t uart_continuous_tx_bemf_allowed = SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED;
-  SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED = FALSE;
-  if(Get_UART_Data() == '\n') /* UART parity bit must be set to none : PCE = 0 */
-  {
-    if(Uart_cmd_flag == 0)
-    {     
-      CMD_Parser((char*)aRxBuffer);
-    }
-    else 
-    {
-      SIXSTEP_parameters.Uart_value_to_set = UART_num_decode();
-      switch(SIXSTEP_parameters.Uart_cmd_to_set) 
-      {
-        case SETSPD_CMD:  /*!<  Set the new speed value command received */
-          MC_Set_Speed((uint16_t)SIXSTEP_parameters.Uart_value_to_set);
-        break;
-        case INIREF_CMD:  /*!<  Set the new STARTUP REFERENCE value command received */
-          SIXSTEP_parameters.startup_reference = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-        case POLESP_CMD:  /*!<  Set the Pole Pairs value command received */
-          SIXSTEP_parameters.NUMPOLESPAIRS = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-        case ACCELE_CMD:  /*!<  Set the Accelleration of the motor command received */
-          SIXSTEP_parameters.ACCEL = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-        case DIRECT_CMD:  /*!<  Set the motor direction */
-          SIXSTEP_parameters.CW_CCW = SIXSTEP_parameters.Uart_value_to_set;
-          MC_Set_PI_param(&PI_parameters);
-        break;
-        case KP_PRM_CMD:  /*!<  Set the KP PI param command received */
-          PI_parameters.Kp_Gain = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-        case KI_PRM_CMD:  /*!<  Set the KI PI param command received */
-          PI_parameters.Ki_Gain = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-        case MEASEL_CMD:  /*!<  Set the continuous measurement to be performed */
-          SIXSTEP_parameters.UART_MEASUREMENT_TYPE = SIXSTEP_parameters.Uart_value_to_set;
-        break;
-      }  /* switch case */
-      Uart_cmd_flag = 0;        
-      if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
-      {
-        SIXSTEP_parameters.UART_TX_REPLY = TRUE;
-        HAL_UART_Transmit_DMA(&huart,(uint8_t *)rowLxBuffer,(COUNTOF(rowLxBuffer) - 1));
-      }
-      else
-      {
-        SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
-        strcpy((char *)aTxBuffer,(const char *)rowLxBuffer);
-      }
-      UART_FLAG_RECEIVE = TRUE;
-    }  /* else */
-    SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED = uart_continuous_tx_bemf_allowed;
-  }  /* if */
-}
+//void UART_Set_Value()
+//{
+//  uint8_t uart_continuous_tx_bemf_allowed = SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED;
+//  SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED = FALSE;
+//  if(Get_UART_Data() == '\n') /* UART parity bit must be set to none : PCE = 0 */
+//  {
+//    if(Uart_cmd_flag == 0)
+//    {
+//      CMD_Parser((char*)aRxBuffer);
+//    }
+//    else
+//    {
+//      SIXSTEP_parameters.Uart_value_to_set = UART_num_decode();
+//      switch(SIXSTEP_parameters.Uart_cmd_to_set)
+//      {
+//        case SETSPD_CMD:  /*!<  Set the new speed value command received */
+//          MC_Set_Speed((uint16_t)SIXSTEP_parameters.Uart_value_to_set);
+//        break;
+//        case INIREF_CMD:  /*!<  Set the new STARTUP REFERENCE value command received */
+//          SIXSTEP_parameters.startup_reference = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//        case POLESP_CMD:  /*!<  Set the Pole Pairs value command received */
+//          SIXSTEP_parameters.NUMPOLESPAIRS = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//        case ACCELE_CMD:  /*!<  Set the Accelleration of the motor command received */
+//          SIXSTEP_parameters.ACCEL = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//        case DIRECT_CMD:  /*!<  Set the motor direction */
+//          SIXSTEP_parameters.CW_CCW = SIXSTEP_parameters.Uart_value_to_set;
+//          MC_Set_PI_param(&PI_parameters);
+//        break;
+//        case KP_PRM_CMD:  /*!<  Set the KP PI param command received */
+//          PI_parameters.Kp_Gain = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//        case KI_PRM_CMD:  /*!<  Set the KI PI param command received */
+//          PI_parameters.Ki_Gain = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//        case MEASEL_CMD:  /*!<  Set the continuous measurement to be performed */
+//          SIXSTEP_parameters.UART_MEASUREMENT_TYPE = SIXSTEP_parameters.Uart_value_to_set;
+//        break;
+//      }  /* switch case */
+//      Uart_cmd_flag = 0;
+//      if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
+//      {
+//        SIXSTEP_parameters.UART_TX_REPLY = TRUE;
+//        HAL_UART_Transmit_DMA(&huart,(uint8_t *)rowLxBuffer,(COUNTOF(rowLxBuffer) - 1));
+//      }
+//      else
+//      {
+//        SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
+//        strcpy((char *)aTxBuffer,(const char *)rowLxBuffer);
+//      }
+//      UART_FLAG_RECEIVE = TRUE;
+//    }  /* else */
+//    SIXSTEP_parameters.UART_CONTINUOUS_TX_BEMF_ALLOWED = uart_continuous_tx_bemf_allowed;
+//  }  /* if */
+//}
 /**
   * @} 
   */
@@ -465,44 +465,44 @@ void CMD_MSG_BOOL_DIRECT()
   *  @{
     * @brief UART Transmit Start motor message  
 */ 
-void CMD_STARTM()
-{     
-  /*!<  Start Motor command received */
-  MC_StartMotor();
-  if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
-  {
-    SIXSTEP_parameters.UART_TX_REPLY = TRUE;
-    HAL_UART_Transmit_DMA(&huart, (uint8_t *)rowMxBuffer, (COUNTOF(rowMxBuffer) - 1));
-  }
-  else
-  {
-    SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
-    strcpy((char *)aTxBuffer,(const char *)rowMxBuffer);
-  }
-}
-/**
-  * @} 
-  */
-
-/** @defgroup CMD_STOPMT    CMD_STOPMT
-  *  @{
-    * @brief UART Transmit Stop motor message  
-*/
-void CMD_STOPMT()
-{      
-  /*!<  Stop Motor command received */
-  MC_StopMotor();     
-  if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
-  {
-    SIXSTEP_parameters.UART_TX_REPLY = TRUE;
-    HAL_UART_Transmit_DMA(&huart, (uint8_t *)rowSxBuffer, (COUNTOF(rowSxBuffer) - 1));
-  }
-  else
-  {
-    SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
-    strcpy((char *)aTxBuffer,(const char *)rowSxBuffer);
-  }
-}
+//void CMD_STARTM()
+//{
+//  /*!<  Start Motor command received */
+//  MC_StartMotor();
+//  if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
+//  {
+//    SIXSTEP_parameters.UART_TX_REPLY = TRUE;
+//    HAL_UART_Transmit_DMA(&huart, (uint8_t *)rowMxBuffer, (COUNTOF(rowMxBuffer) - 1));
+//  }
+//  else
+//  {
+//    SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
+//    strcpy((char *)aTxBuffer,(const char *)rowMxBuffer);
+//  }
+//}
+///**
+//  * @}
+//  */
+//
+///** @defgroup CMD_STOPMT    CMD_STOPMT
+//  *  @{
+//    * @brief UART Transmit Stop motor message
+//*/
+//void CMD_STOPMT()
+//{
+//  /*!<  Stop Motor command received */
+//  MC_StopMotor();
+//  if (huart.State != HAL_UART_STATE_BUSY_TX && huart.State != HAL_UART_STATE_BUSY_TX_RX)
+//  {
+//    SIXSTEP_parameters.UART_TX_REPLY = TRUE;
+//    HAL_UART_Transmit_DMA(&huart, (uint8_t *)rowSxBuffer, (COUNTOF(rowSxBuffer) - 1));
+//  }
+//  else
+//  {
+//    SIXSTEP_parameters.UART_TX_DIFFERED_REPLY = TRUE;
+//    strcpy((char *)aTxBuffer,(const char *)rowSxBuffer);
+//  }
+//}
 /**
   * @} 
   */

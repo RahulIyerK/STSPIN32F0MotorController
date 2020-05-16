@@ -80,7 +80,7 @@ void USART1_IRQHandler(void)
       huart.State |= HAL_UART_STATE_BUSY_RX;
       if (UART_Receive_IT(&huart)==HAL_OK)
       {
-        UART_Set_Value();
+//        UART_Set_Value();
       }
     }
     /* Clear RXNE interrupt flag */

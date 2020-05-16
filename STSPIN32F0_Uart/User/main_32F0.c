@@ -60,7 +60,59 @@ static void MX_REFx_Init(void);
 #endif
 static void MX_LF_TIMx_Init(void);
 static void MX_UART_Init(void);
+uint32_t test_ADC_read();
 
+
+TIM_OC_InitTypeDef sConfig;
+
+void test_start_notimex(){
+	sConfig.OCMode = TIM_OCMODE_PWM1;
+	sConfig.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfig.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+	sConfig.OCIdleState = TIM_OCIDLESTATE_RESET;
+	sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+
+	HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfig, BSP_SIP_HF_TIMx_CH1);
+	HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);
+//	HAL_TIMEx_PWMN_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);
+	sConfig.Pulse = 0;
+	HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfig, BSP_SIP_HF_TIMx_CH2);
+	HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);
+//	HAL_TIMEx_PWMN_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);
+	HAL_TIM_PWM_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);
+//	HAL_TIMEx_PWMN_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);
+
+	__HAL_TIM_ENABLE_IT(&LF_TIMx, TIM_IT_CC2);
+//	HAL_TIMEx_ConfigCommutationEvent_IT(&HF_TIMx, TIM_TS_ITR1, TIM_COMMUTATION_TRGI);
+//	SIXSTEP_parameters.ALIGN_OK = TRUE;
+//	SIXSTEP_parameters.STATUS = STARTUP;
+//	HAL_TIMEx_HallSensor_Start_IT(&LF_TIMx);
+}
+
+void test_start_timex(){
+	sConfig.OCMode = TIM_OCMODE_PWM1;
+	sConfig.OCFastMode = TIM_OCFAST_DISABLE;
+	sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfig.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+	sConfig.OCIdleState = TIM_OCIDLESTATE_RESET;
+	sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+
+	HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfig, BSP_SIP_HF_TIMx_CH1);
+	HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);
+//	HAL_TIMEx_PWMN_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH1);
+	sConfig.Pulse = 0;
+	HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfig, BSP_SIP_HF_TIMx_CH2);
+	HAL_TIM_PWM_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);
+//	HAL_TIMEx_PWMN_Start(&HF_TIMx,BSP_SIP_HF_TIMx_CH2);
+	HAL_TIM_PWM_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);
+//	HAL_TIMEx_PWMN_Stop(&HF_TIMx,BSP_SIP_HF_TIMx_CH3);
+
+	__HAL_TIM_ENABLE_IT(&LF_TIMx, TIM_IT_CC2);
+}
+
+
+uint32_t bemf;
 int main(void)
 {
 
@@ -82,18 +134,22 @@ int main(void)
   MX_REFx_Init();
 #endif
   MX_LF_TIMx_Init();
-  MX_UART_Init();
+//  MX_UART_Init();
 
  /* **************************************************************************** 
   ==============================================================================   
             ###### This function initializes 6-Step lib ######
   ============================================================================== 
   **************************************************************************** */     
-  MC_SixStep_INIT();
+//  MC_SixStep_INIT();
   /****************************************************************************/  
   
+
+
   /* Infinite loop */
-  while (1)
+
+
+    while (1)
   {
 /*! **************************************************************************
   ==============================================================================   
@@ -133,8 +189,15 @@ int main(void)
                        ###### USER SPACE ######
   ==============================================================================      
   *****************************************************************************/    
-      
+   bemf = test_ADC_read();
    
+   test_start_notimex();
+
+   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_SET);
+   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_SET);
+   HAL_GPIO_WritePin(GPIOB,GPIO_PIN_15,GPIO_PIN_SET);
+
+
   /****************************************************************************/
   }
 }
@@ -244,6 +307,32 @@ void MX_HF_TIMx_Init(void)
   HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_1);
   HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_2);
   HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_3);
+}
+
+void MX_HF_TIMx_Init_test(){
+	  TIM_MasterConfigTypeDef sMasterConfig;
+	  TIM_OC_InitTypeDef sConfigOC;
+
+	  HF_TIMx.Instance = TIM3;
+	  HF_TIMx.Init.Prescaler = 0;
+	  HF_TIMx.Init.CounterMode = TIM_COUNTERMODE_UP;
+	  HF_TIMx.Init.Period = 1300;
+	  HF_TIMx.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	  HAL_TIM_PWM_Init(&HF_TIMx);
+
+	  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	  HAL_TIMEx_MasterConfigSynchronization(&HF_TIMx, &sMasterConfig);
+
+	  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	  sConfigOC.OCIdleState = TIM_OCIDLESTATE_SET;
+	  sConfigOC.Pulse = 650;
+	  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+
+	  HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_1);
+	  HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_2);
+	  HAL_TIM_PWM_ConfigChannel(&HF_TIMx, &sConfigOC, TIM_CHANNEL_3);
 }
 
 #ifndef VOLTAGE_MODE
