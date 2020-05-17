@@ -23,8 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32f0xx_hal_adc.h"
+#include "stm32f0xx_hal.h"
 #include "CurrentController.h"
+#include "StepManager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,75 +66,10 @@ static void MX_TIM14_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void test1(){//test low side switching, high side open
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
-}
-
-void test1_1(){ //test set duty before start
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
-
-}
-
-
-void test1_2(){ //test set duty after start
-  HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_9,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_10,GPIO_PIN_RESET);
-
-	HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 150);
-
-
-}
-
-//HAL_TIMEx_PWMN_Start(&htim1,TIM_CHANNEL_1);//should 1N
-void test2(){ //test high side switching, low side open
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-	    HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
-
-	    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_2);
-
-	    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
-
-	    HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14,GPIO_PIN_SET);
 
 
 
-}
 
-
-/******************************************************//**
- * @brief     Select the new ADC Channel
- * @param[in] adc_ch 
- * @retval    None
- **********************************************************/
-void ADC_Channel(uint32_t adc_ch)
-{ 
-#ifdef HALL_SENSORS
-  __HAL_ADC_ENABLE_IT(&hadc, (ADC_IT_EOC | ADC_IT_EOS | ADC_IT_OVR));
-#endif
-  hadc.Instance->CR |= ADC_CR_ADSTP;
-  while(hadc.Instance->CR & ADC_CR_ADSTP);   
-  /* Regular sequence configuration */
-  /* Set the channel selection register from the selected channel */
-  hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
-  hadc.Instance->CR |= ADC_CR_ADSTART;
-}    
-
-
-uint32_t bemf_val;
 uint32_t counter;
 volatile uint32_t adc_buffer[100] = {0};
 //volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
@@ -142,12 +78,6 @@ volatile uint32_t end_tim[200] = {0};
 
 volatile uint32_t c_counter; //counter for current loop characterization
 volatile uint32_t c_tim[200];
-
-
-void test_ADC_read(){
-	ADC_Channel(ADC_CHANNEL_2);
-	adc_buffer[c_counter] = HAL_ADC_GetValue(&hadc);
-}
 
 
 /* USER CODE END 0 */
@@ -185,15 +115,13 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
-
-//  HAL_ADC_Start_DMA(&hadc, (uint32_t*)&adc_buffer, 3);
-  	  HAL_ADC_Start_IT(&hadc);
+  SM_init();
+  HAL_ADC_Start_IT(&hadc);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  test2();
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim14);
   while (1)
@@ -201,12 +129,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  HAL_ADC_PollForConversion (&hadc, 1000);
-//
-//	  bemf_val = test_ADC_read();
-//
-//	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */
@@ -310,6 +232,13 @@ static void MX_ADC_Init(void)
   {
     Error_Handler();
   }
+  /** Configure for the selected ADC regular channel to be converted. 
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC_Init 2 */
 
   /* USER CODE END ADC_Init 2 */
@@ -363,7 +292,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 50-1;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -420,7 +349,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 3;
+  htim3.Init.Period = 12;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -531,16 +460,8 @@ volatile double isamp, iref, bemf_estimation, motor_vsupply;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
 
-
-	if (counter < 100)
-	{
-//		start_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
-		test_ADC_read();
-
-//		PI_Iloop(isamp, iref, bemf_estimation, motor_vsupply);
-//		end_tim[counter] = __HAL_TIM_GET_COUNTER(&htim1);
-		counter++;
-	}
+  SM_sampleBEMF();
+  SM_sampleCurrent();
 
 }
 
