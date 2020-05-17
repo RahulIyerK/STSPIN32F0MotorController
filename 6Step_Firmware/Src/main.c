@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32f0xx_hal_adc.h"
+#include "stm32f0xx_hal.h"
 #include "CurrentController.h"
 #include "StepManager.h"
 /* USER CODE END Includes */
@@ -115,8 +115,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
-
-//  HAL_ADC_Start_DMA(&hadc, (uint32_t*)&adc_buffer, 3);
+  SM_init();
   HAL_ADC_Start_IT(&hadc);
   /* USER CODE END 2 */
 
@@ -233,6 +232,13 @@ static void MX_ADC_Init(void)
   {
     Error_Handler();
   }
+  /** Configure for the selected ADC regular channel to be converted. 
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC_Init 2 */
 
   /* USER CODE END ADC_Init 2 */
@@ -286,7 +292,7 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 50-1;
+  sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -343,7 +349,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 3;
+  htim3.Init.Period = 12;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)

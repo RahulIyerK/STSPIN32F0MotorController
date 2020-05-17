@@ -1,7 +1,8 @@
 #include "StepManager.h"
-#include "stm32f0xx_hal_tim.h"
-#include "stm32f0xx_hal_gpio.h"
-#include "stm32f0xx_hal_adc.h"
+//#include "stm32f0xx_hal_tim.h"
+//#include "stm32f0xx_hal_gpio.h"
+//#include "stm32f0xx_hal_adc.h"
+#include "stm32f0xx_hal.h"
 #include <stdint.h>
 
 extern TIM_HandleTypeDef htim1;
@@ -99,8 +100,15 @@ void ADC_Channel(uint32_t adc_ch)
 
 void SM_init()
 {
-    curr_step = 0;
-    configStep();
+    curr_step = 5; //initialize step manager state so that first step is 0
+
+    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_3);
+
+    SM_setSwitchingDuty(10);
+
+    //TODO: rotor alignment logic...
 }
 
 void SM_nextStep()
@@ -138,13 +146,13 @@ void SM_sampleBEMF()
             ADC_Channel(ADC_PHASE_B); 
         break;
     }
-	return HAL_ADC_GetValue(&hadc);
+	//TODO: put HAL_ADC_GetValue(&hadc); somewhere
 }
 
 void SM_sampleCurrent()
 {
     ADC_Channel(ADC_CURRENT_CHANNEL);
-    return HAL_ADC_GetValue(&hadc);
+	//TODO: put HAL_ADC_GetValue(&hadc); somewhere
 }
 
 void SM_setSwitchingDuty(uint16_t duty)

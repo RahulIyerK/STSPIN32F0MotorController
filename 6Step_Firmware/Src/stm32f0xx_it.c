@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "stm32f0xx_hal_tim.h"
 #include "CurrentController.h"
+#include "StepManager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -204,8 +205,9 @@ void TIM14_IRQHandler(void)
   /* USER CODE END TIM14_IRQn 0 */
   HAL_TIM_IRQHandler(&htim14);
   /* USER CODE BEGIN TIM14_IRQn 1 */
-  asdf++;
-  	  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
+//  asdf++;
+//  	  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
+  SM_nextStep();
 
   /* USER CODE END TIM14_IRQn 1 */
 }
