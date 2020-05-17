@@ -20,6 +20,8 @@ extern ADC_HandleTypeDef hadc;
 #define ADC_PHASE_B (ADC_CHANNEL_1)
 #define ADC_PHASE_C (ADC_CHANNEL_2)
 
+#define ADC_CURRENT_CHANNEL (ADC_CHANNEL_4)
+
 // STEPS 0 through 5:
 //   HIGH  |   LOW   |  OPEN
 // -------------------------
@@ -46,36 +48,54 @@ void configStep()
         case 0:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_C);               // start PHASE_C PWM
         break;
         case 1:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_A);               // start PHASE_A PWM
         break;
         case 2:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_A);               // start PHASE_A PWM  
         break;
         case 3:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_B);               // start PHASE_B PWM       
         break;
         case 4:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_B);               // start PHASE_B PWM 
         break;
         case 5:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
             HAL_TIM_PWM_Start(&htim1, HIGHSIDE_PHASE_C);               // start PHASE_C PWM       
         break;
 
     }
 }
+
+// ADC Channel selection function copied from ST's MC SDK
+void ADC_Channel(uint32_t adc_ch)
+{ 
+  hadc.Instance->CR |= ADC_CR_ADSTP;
+  while(hadc.Instance->CR & ADC_CR_ADSTP);   
+  /* Regular sequence configuration */
+  /* Set the channel selection register from the selected channel */
+  hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
+  hadc.Instance->CR |= ADC_CR_ADSTART;
+}    
+
 
 void SM_init()
 {
@@ -95,7 +115,7 @@ void SM_nextStep()
     configStep();
 }
 
-uint32_t SM_sampleBEMF()
+void SM_sampleBEMF()
 {
     switch (curr_step)
     {
@@ -119,6 +139,12 @@ uint32_t SM_sampleBEMF()
         break;
     }
 	return HAL_ADC_GetValue(&hadc);
+}
+
+void SM_sampleCurrent()
+{
+    ADC_Channel(ADC_CURRENT_CHANNEL);
+    return HAL_ADC_GetValue(&hadc);
 }
 
 void SM_setSwitchingDuty(uint16_t duty)
