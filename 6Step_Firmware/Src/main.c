@@ -35,6 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ADC_CURRENT_CHANNEL (ADC_CHANNEL_4)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,13 +73,14 @@ static void MX_TIM14_Init(void);
 
 
 uint32_t counter;
-volatile uint32_t adc_buffer[100] = {0};
-//volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
-volatile uint32_t end_tim[200] = {0};
+//volatile uint32_t adc_buffer[100] = {0};
+////volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
+//volatile uint32_t end_tim[200] = {0};
 
 
 volatile uint32_t c_counter; //counter for current loop characterization
 volatile uint32_t c_tim[200];
+
 
 
 /* USER CODE END 0 */
@@ -89,7 +92,7 @@ volatile uint32_t c_tim[200];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	c_counter = 0;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -462,7 +465,18 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
 
   SM_sampleBEMF();
   SM_sampleCurrent();
-
+  if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1)){
+	  //read bemf
+	  SM_sampleBEMF();
+	  //set next channel to current
+	  ADC_Channel(ADC_CURRENT_CHANNEL);
+  }
+  else{
+	  //read current
+	  SM_sampleCurrent();
+	  //set next channel to bemf
+	  ADC_Channel(currentBemfAdcChannel);
+  }
 }
 
 

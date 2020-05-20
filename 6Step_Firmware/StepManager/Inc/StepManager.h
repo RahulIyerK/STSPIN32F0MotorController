@@ -10,5 +10,9 @@ void SM_sampleCurrent();
 
 void SM_setSwitchingDuty(uint16_t duty);
 
+static volatile uint8_t currentBemfAdcChannel;
+
+void ADC_Channel(uint32_t adc_ch);
+
 #endif //STEP_MANAGER_H
 

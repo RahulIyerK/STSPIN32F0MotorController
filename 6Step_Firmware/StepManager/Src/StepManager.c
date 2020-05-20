@@ -23,6 +23,8 @@ extern ADC_HandleTypeDef hadc;
 
 #define ADC_CURRENT_CHANNEL (ADC_CHANNEL_4)
 
+#define BEMF_thresh 200
+
 // STEPS 0 through 5:
 //   HIGH  |   LOW   |  OPEN
 // -------------------------
@@ -34,6 +36,13 @@ extern ADC_HandleTypeDef hadc;
 // PHASE_C | PHASE_A | PHASE_B  
 
 int curr_step = 0;
+
+volatile uint32_t current_buffer[3] = {0};//currently tim 3 is set to call the current controller every 2 cycles of tim1 soo we should only need to store 2 readings
+volatile uint32_t bemf_buffer[3] = {0};//still using 3 just to be safe
+volatile uint8_t current_index;
+volatile uint8_t bemf_index;
+
+extern TIM_HandleTypeDef htim14;
 
 void configStep()
 {
@@ -102,6 +111,10 @@ void SM_init()
 {
     curr_step = 5; //initialize step manager state so that first step is 0
 
+    currentBemfAdcChannel = 0;//zero out the current ADC channel
+	current_index = 0;
+	bemf_index = 0;
+
     HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
     HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_3);
@@ -121,38 +134,55 @@ void SM_nextStep()
     }
     
     configStep();
+
+    //synchronize the ADC read with the step switching
+    switch (curr_step)
+    {
+        case 0:
+        	currentBemfAdcChannel = ADC_PHASE_A;
+            //ADC_Channel(ADC_PHASE_A);
+        break;
+        case 1:
+            //ADC_Channel(ADC_PHASE_C);
+            currentBemfAdcChannel = ADC_PHASE_C;
+        break;
+        case 2:
+            //ADC_Channel(ADC_PHASE_B); 
+            currentBemfAdcChannel = ADC_PHASE_B;
+        break;
+        case 3:
+            //ADC_Channel(ADC_PHASE_A);
+            currentBemfAdcChannel = ADC_PHASE_A;
+        break;
+        case 4:
+            //ADC_Channel(ADC_PHASE_C);
+            currentBemfAdcChannel = ADC_PHASE_C;
+        break;
+        case 5:
+            //ADC_Channel(ADC_PHASE_B); 
+            currentBemfAdcChannel = ADC_PHASE_B;
+        break;
+    }
 }
 
 void SM_sampleBEMF()
 {
-    switch (curr_step)
-    {
-        case 0:
-            ADC_Channel(ADC_PHASE_A);
-        break;
-        case 1:
-            ADC_Channel(ADC_PHASE_C);
-        break;
-        case 2:
-            ADC_Channel(ADC_PHASE_B); 
-        break;
-        case 3:
-            ADC_Channel(ADC_PHASE_A);
-        break;
-        case 4:
-            ADC_Channel(ADC_PHASE_C);
-        break;
-        case 5:
-            ADC_Channel(ADC_PHASE_B); 
-        break;
-    }
-	//TODO: put HAL_ADC_GetValue(&hadc); somewhere
+	//storing this just in case but I don't think we need it
+    //upon 0 detection we should immediately set the period of the LF timer
+    bemf_buffer[bemf_index] = HAL_ADC_GetValue(&hadc);
+
+    if(bemf_buffer[bemf_index] < BEMF_thresh){
+		__HAL_TIM_SET_AUTORELOAD(&htim14, __HAL_TIM_GET_COUNTER(&htim14) << 2);
+	}
+	bemf_index++;
+
 }
 
 void SM_sampleCurrent()
 {
-    ADC_Channel(ADC_CURRENT_CHANNEL);
-	//TODO: put HAL_ADC_GetValue(&hadc); somewhere
+    //ADC_Channel(ADC_CURRENT_CHANNEL);
+	current_buffer[current_index] = HAL_ADC_GetValue(&hadc);
+	current_index++;
 }
 
 void SM_setSwitchingDuty(uint16_t duty)
