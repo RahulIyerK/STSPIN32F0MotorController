@@ -35,7 +35,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ADC_CURRENT_CHANNEL (ADC_CHANNEL_4)
 
 /* USER CODE END PD */
 
@@ -72,7 +71,6 @@ static void MX_TIM14_Init(void);
 
 
 
-uint32_t counter;
 //volatile uint32_t adc_buffer[100] = {0};
 ////volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
 //volatile uint32_t end_tim[200] = {0};
@@ -80,9 +78,10 @@ uint32_t counter;
 
 volatile uint32_t c_counter; //counter for current loop characterization
 volatile uint32_t c_tim[200];
+volatile int32_t testcnt;
+volatile uint8_t toggle;
 
-
-
+volatile uint8_t ADC_OK;
 /* USER CODE END 0 */
 
 /**
@@ -92,7 +91,9 @@ volatile uint32_t c_tim[200];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  ADC_OK = 0;
+  testcnt = 0;
+  toggle = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -119,7 +120,6 @@ int main(void)
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
   SM_init();
-  HAL_ADC_Start_IT(&hadc);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -127,6 +127,8 @@ int main(void)
 
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim14);
+  HAL_ADC_Start_IT(&hadc);
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -207,7 +209,7 @@ static void MX_ADC_Init(void)
   hadc.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_TRGO;
   hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc.Init.DMAContinuousRequests = DISABLE;
-  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   if (HAL_ADC_Init(&hadc) != HAL_OK)
   {
     Error_Handler();
@@ -270,7 +272,7 @@ static void MX_TIM1_Init(void)
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
   htim1.Init.Period = 100-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
@@ -460,23 +462,35 @@ static void MX_GPIO_Init(void)
 //just some dummy variables to test the control loop
 volatile double isamp, iref, bemf_estimation, motor_vsupply;
 
+
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
 
-  SM_sampleBEMF();
-  SM_sampleCurrent();
-  if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1)){
-	  //read bemf
-	  SM_sampleBEMF();
-	  //set next channel to current
-	  ADC_Channel(ADC_CURRENT_CHANNEL);
+//	if (toggle)
+//	{
+//		testcnt++;
+//	}
+//	else
+//	{
+//		testcnt--;
+//	}
+//	toggle = !toggle;
+  if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
+  {
+  	  //read bemf
+	  if (ADC_OK)
+  		 SM_sampleBEMF();
+
   }
-  else{
-	  //read current
-	  SM_sampleCurrent();
-	  //set next channel to bemf
-	  ADC_Channel(currentBemfAdcChannel);
+  else
+  {
+  	  //read current
+	  if (ADC_OK)
+  		  SM_sampleCurrent();
+
   }
+
+  ADC_OK = 1;
 }
 
 

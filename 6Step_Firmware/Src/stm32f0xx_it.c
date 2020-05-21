@@ -35,11 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-//TODO: delete this
- uint32_t asdf = 0;
 
-extern volatile uint8_t current_index;
-extern volatile uint8_t bemf_index;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -195,8 +191,7 @@ void TIM3_IRQHandler(void)
 	  c_tim [2 * c_counter + 1] = __HAL_TIM_GET_COUNTER(&htim3);
 	  c_counter++;
   }
-  current_index = 0;
-  bemf_index = 0;
+
 
   /* USER CODE END TIM3_IRQn 1 */
 }
@@ -211,7 +206,6 @@ void TIM14_IRQHandler(void)
   /* USER CODE END TIM14_IRQn 0 */
   HAL_TIM_IRQHandler(&htim14);
   /* USER CODE BEGIN TIM14_IRQn 1 */
-//  asdf++;
 //  	  HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_1);
   SM_nextStep();
 
