@@ -25,15 +25,11 @@ extern ADC_HandleTypeDef hadc;
 
 #define BEMF_thresh 200
 
-extern volatile uint8_t ADC_OK;
 uint32_t currentBemfAdcChannel;
 volatile uint32_t bemf;
 volatile uint32_t current_error;
 volatile uint32_t current_error_acc;
 volatile uint32_t current_reference;
-
-uint32_t num_bemfs;
-uint32_t num_currents;
 
 
 // STEPS 0 through 5:
@@ -51,16 +47,19 @@ int curr_step = 0;
 extern TIM_HandleTypeDef htim2;
 
 uint16_t duty;
+uint8_t align_ok;
 
 // ADC Channel selection function copied from ST's MC SDK
 inline void ADC_Channel(uint32_t adc_ch)
 {
+
   hadc.Instance->CR |= ADC_CR_ADSTP;
-//  while(hadc.Instance->CR & ADC_CR_ADSTP);
+  while(hadc.Instance->CR & ADC_CR_ADSTP);
   /* Regular sequence configuration */
   /* Set the channel selection register from the selected channel */
   hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
   hadc.Instance->CR |= ADC_CR_ADSTART;
+
 }
 
 void configStep()
@@ -116,7 +115,16 @@ void configStep()
         case 5:
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+
+            if (align_ok)
+            {
+            	HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); //reset PHASE_B if not in alignment mode
+            }
+            else
+            {
+            	HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET); // set PHASE_B to align
+            	align_ok = 1;
+            }
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // start PHASE_C PWM
 
         break;
@@ -130,7 +138,7 @@ void configStep()
 
 void SM_init()
 {
-    curr_step = 5; //initialize step manager state so that first step is 0
+    curr_step = 5; //initialize step manager state so that first step commutated to is 0
 
     currentBemfAdcChannel = 0;//zero out the current ADC channel
 
@@ -139,17 +147,20 @@ void SM_init()
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
 
-    duty = 50;
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B GPIO
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
+
+    duty = 36;
 
     current_error = 0;
     current_error_acc = 0;
     current_reference = 0;
     bemf = 0;
+    align_ok = 0;
 
-    num_bemfs = 0;
-    num_currents = 0;
+    configStep();
 
-    //TODO: rotor alignment logic...
 }
 
 void SM_nextStep()
@@ -185,19 +196,21 @@ void SM_nextStep()
             currentBemfAdcChannel = ADC_PHASE_B;
         break;
     }
-    ADC_OK = 0;
+
+    if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
+    {
+    	ADC_Channel(currentBemfAdcChannel);
+    }
 }
 
 void SM_sampleBEMF()
 {
-	//storing this just in case but I don't think we need it
-    //upon 0 detection we should immediately set the period of the LF timer
+    //upon zero-cross detection we should immediately set the period of the LF timer
 
 	bemf = HAL_ADC_GetValue(&hadc);
     if(bemf < BEMF_thresh){
 //		__HAL_TIM_SET_AUTORELOAD(&htim2, __HAL_TIM_GET_COUNTER(&htim2) << 1);
 	}
-    num_bemfs++;
     ADC_Channel(ADC_CURRENT_CHANNEL);
 
 }
@@ -206,7 +219,6 @@ void SM_sampleCurrent()
 {
 	current_error = HAL_ADC_GetValue(&hadc) - current_reference;
 	current_error_acc += current_error;
-	num_currents++;
 	ADC_Channel(currentBemfAdcChannel);
 }
 
@@ -217,15 +229,3 @@ void SM_setSwitchingDuty(uint16_t duty)
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, duty);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, duty);
 }
-
-
-void SM_setADCChannelCurrent()
-{
-	ADC_Channel(ADC_CURRENT_CHANNEL);
-}
-
-void SM_setADCChannelBEMF()
-{
-	ADC_Channel(currentBemfAdcChannel);
-}
-
