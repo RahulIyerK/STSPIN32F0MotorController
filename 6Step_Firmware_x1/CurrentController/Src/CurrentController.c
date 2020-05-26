@@ -1,37 +1,32 @@
 #include "CurrentController.h"
 #include <math.h>
+#include "fixptmath.h"
 
-volatile PI_params_S Iloop_params = {0,0,0};
+volatile PI_params_S Iloop_params;
+
+
+void PI_I_init()
+{
+    Iloop_params.ierr = 0;
+    Iloop_params.integ_acc = 0;
+}
 
 int PI_Iloop()
 {
-    // isamp: latest current sample
-    // iref:  current control reference
-    // bemf_estimation: estimation of back-emf voltage magnitude based on latest speed sample
-    // motor_vsupply: DC supply across 3-phase H-bridge
+    int32_t pterm = MUL32_Q0_UFIX_SFIX(I_CONTROL_KP, Iloop_params.ierr);
+    int32_t va = ADD32_Q0_SFIX_SFIX((Iloop_params.integ_acc >> I_CONTROL_KI_SHIFT), pterm);
 
-
-
-    float va = I_CONTROL_KI * Iloop_params.integ_acc + I_CONTROL_KP * Iloop_params.ierr; //PI term summation + feedforward term from bemf estimation
-    float duty = va/Iloop_params.vsupply;
-
-    // saturation
-    if (va > Iloop_params.vsupply)
-    {
-        return PWM_COUNTER_MAX;
-    }
-    else if (va < 0)
+    if (va < 0)
     {
         return 0;
     }
 
-    //on-time duty
-
-
-    //result pwm register compare value depends on how on-time is defined with respect to it
-
-    int pwm_compare_val = (int)(duty * PWM_COUNTER_MAX);
+    uint32_t pwm_compare_val = va * VA_DUTY_SCALE_SHIFT;
+    
+    if (pwm_compare_val > PWM_COUNTER_MAX)
+    {
+        return PWM_COUNTER_MAX;
+    }
 
     return pwm_compare_val;
-//	return 0;
 }
