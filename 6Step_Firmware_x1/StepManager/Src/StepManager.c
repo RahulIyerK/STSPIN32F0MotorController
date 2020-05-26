@@ -1,13 +1,10 @@
 #include "StepManager.h"
-//#include "stm32f0xx_hal_tim.h"
-//#include "stm32f0xx_hal_gpio.h"
-//#include "stm32f0xx_hal_adc.h"
+#include "StepManager_defs.h"
 #include "stm32f0xx_hal.h"
 #include <stdint.h>
 
 extern TIM_HandleTypeDef htim1;
 extern ADC_HandleTypeDef hadc;
-
 
 #define LOWSIDE_PHASE_A (GPIO_PIN_13)
 #define LOWSIDE_PHASE_B (GPIO_PIN_14)
@@ -31,6 +28,15 @@ volatile uint32_t current_error;
 volatile uint32_t current_error_acc;
 volatile uint32_t current_reference;
 
+typedef enum CONTROL_STATE_E
+{
+    ALIGNMENT,  // rotor alignment
+    STEPPER,    // stepper drive (12-steps, rotor forced to align with each step)
+    RAMP,       // startup speed ramp (6-step, speed increase)
+    RUN         // autocommutation (closed loop speed control)
+} CONTROL_STATE;
+
+CONTROL_STATE controlState;
 
 // STEPS 0 through 5:
 //   HIGH  |   LOW   |  OPEN
@@ -45,9 +51,6 @@ volatile uint32_t current_reference;
 int curr_step = 0;
 
 extern TIM_HandleTypeDef htim2;
-
-uint16_t duty;
-uint8_t align_ok;
 
 // ADC Channel selection function copied from ST's MC SDK
 inline void ADC_Channel(uint32_t adc_ch)
@@ -64,72 +67,88 @@ inline void ADC_Channel(uint32_t adc_ch)
 
 void configStep()
 {
-    
-    // TODO: probably don't have to be this aggressive about turning everything off before changing steps
-
-//    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
-//    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_2);
-//    HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_3);
-
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-
-    switch (curr_step)
+    switch (controlState)
     {
-        case 0:
+        case ALIGNMENT:
+        {
+            // align to intermediate position before step 0
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // start PHASE_C PWM
-
+        }
         break;
-        case 1:
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);     // start PHASE_A PWM
-
+        case STEPPER:
         break;
-        case 2:
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);     // start PHASE_A PWM
-
+        case RAMP:
         break;
-        case 3:
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);     // start PHASE_B PWM
+        case RUN:
+        {
+            // TODO: probably don't have to be this aggressive about turning everything off before changing steps
 
-        break;
-        case 4:
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);     // start PHASE_B PWM
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+            __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
 
-        break;
-        case 5:
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-
-            if (align_ok)
+            switch (curr_step)
             {
-            	HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); //reset PHASE_B if not in alignment mode
-            }
-            else
-            {
-            	HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET); // set PHASE_B to align
-            	align_ok = 1;
-            }
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // start PHASE_C PWM
+                case 0:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // start PHASE_C PWM
+                }
+                break;
+                case 1:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);     // start PHASE_A PWM
+                }
+                break;
+                case 2:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);     // start PHASE_A PWM
+                }
+                break;
+                case 3:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);     // start PHASE_B PWM
+                }
+                break;
+                case 4:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);     // start PHASE_B PWM
+                }
+                break;
+                case 5:
+                {
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+                    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B  
+                    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // start PHASE_C PWM
+                }
+                break;
 
+            }
+        }
         break;
-
     }
+    
 
 }
 
@@ -138,7 +157,6 @@ void configStep()
 
 void SM_init()
 {
-    curr_step = 5; //initialize step manager state so that first step commutated to is 0
 
     currentBemfAdcChannel = 0;//zero out the current ADC channel
 
@@ -147,17 +165,23 @@ void SM_init()
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_3);
 
-    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
-    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B GPIO
-    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
+    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);     // set PWM duty to 0
+    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);     // set PWM duty to 0
+    __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);     // set PWM duty to 0
 
-    duty = 36;
+
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // open PHASE_A LS FET
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // open PHASE_B LS FET
+    HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // open PHASE_C LS FET
 
     current_error = 0;
     current_error_acc = 0;
     current_reference = 0;
     bemf = 0;
-    align_ok = 0;
+    curr_step = 5;
+
+    controlState = ALIGNMENT;
+
 
     configStep();
 
