@@ -198,7 +198,7 @@ void TIM3_IRQHandler(void)
   // HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
   
-  uint32_t pwm_compare_val = CC_runCurrentControlCycle();
+  uint16_t pwm_compare_val = CC_runCurrentControlCycle();
   SM_updateDuty(pwm_compare_val);
   /* USER CODE END TIM3_IRQn 1 */
 }

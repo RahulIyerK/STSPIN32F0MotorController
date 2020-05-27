@@ -15,7 +15,7 @@ void CC_setCurrentReference(uint32_t ref)
     iloopParams.iref = ref;
 }
 
-uint32_t CC_runCurrentControlCycle()
+uint16_t CC_runCurrentControlCycle()
 {
     int32_t pterm = MUL32_Q0_UFIX_SFIX(I_CONTROL_KP, iloopParams.ierr);
     int32_t pwm_compare_val = ADD32_Q0_SFIX_SFIX((iloopParams.ierr_acc >> I_CONTROL_KI_SHIFT), pterm);
@@ -31,7 +31,7 @@ uint32_t CC_runCurrentControlCycle()
         return HF_TIM_PERIOD;
     }
 
-    return pwm_compare_val;
+    return (uint16_t)pwm_compare_val;
 }
 
 void CC_resetIntegral()

@@ -35,7 +35,7 @@ typedef struct ILoopParams_S
 
 
 void CC_setCurrentReference(uint32_t ref);
-uint32_t CC_runCurrentControlCycle();
+uint16_t CC_runCurrentControlCycle();
 
 void CC_processCurrent(uint32_t samp);
 void CC_resetIntegral();

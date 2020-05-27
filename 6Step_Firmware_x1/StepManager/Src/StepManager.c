@@ -22,6 +22,8 @@ static inline void ADC_Channel(uint32_t adc_ch)
 
 }
 
+volatile uint16_t duty_tracker;
+
 
 typedef enum CONTROL_STATE_E
 {
@@ -111,54 +113,9 @@ uint16_t SM_fetchRampARR(uint8_t index)
     return ramp_table[index];
 }
 
-
-void configStep()
+void setupFETs()
 {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
-    // TODO: probably don't have to be this aggressive about turning everything off before changing steps
-
-    CC_resetIntegral(); // TODO: how often should integral be reset?
-
-    switch (controlState)
-    {
-        case ALIGNMENT:
-        {
-            // align to intermediate position before step 0
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
-            CC_setCurrentReference(ALIGNMENT_CURRENT_REF);
-
-            alignment_index++;
-            if (alignment_index == NUM_ALIGNMENT_PERIODS)
-            {
-                controlState = RAMP;
-                ramp_index = 0; // make sure ramp starts on index 0
-                alignment_index = 0; //reset for future alignments (?)
-            }
-        }
-        break;
-        case RAMP:
-        {
-            CC_setCurrentReference(RAMP_CURRENT_REF);
-            if (ramp_index < RAMP_TABLE_ENTRIES)
-            {
-                uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
-                __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
-                ramp_index++;
-            }
-
-            //TODO: startup zero-cross detection validation
-            
-        }
-        break;
-        case RUN:
-        {
-            //TODO: set current reference based on speed control cycle output
-
-            switch (curr_step)
+    switch (curr_step)
             {
                 case 0:
                 {
@@ -204,6 +161,55 @@ void configStep()
                 break;
 
             }
+}
+void configStep()
+{
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
+    // TODO: probably don't have to be this aggressive about turning everything off before changing steps
+
+    CC_resetIntegral(); // TODO: how often should integral be reset?
+
+    switch (controlState)
+    {
+        case ALIGNMENT:
+        {
+            // align to intermediate position before step 0
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
+            CC_setCurrentReference(ALIGNMENT_CURRENT_REF);
+
+            alignment_index++;
+            if (alignment_index == NUM_ALIGNMENT_PERIODS)
+            {
+                controlState = RAMP;
+                ramp_index = 0; // make sure ramp starts on index 0
+                alignment_index = 0; //reset for future alignments (?)
+            }
+        }
+        break;
+        case RAMP:
+        {
+            CC_setCurrentReference(RAMP_CURRENT_REF);
+            if (ramp_index < RAMP_TABLE_ENTRIES)
+            {
+                uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
+                __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
+                ramp_index++;
+            }
+            setupFETs();
+            //TODO: startup zero-cross detection validation
+            //TODO: entry condition into RUN state
+            
+        }
+        break;
+        case RUN:
+        {
+            //TODO: set current reference based on speed control cycle output
+            setupFETs();
+            
         }
         break;
     }
@@ -303,8 +309,9 @@ void SM_processBEMF(uint32_t bemf)
     }
 }
 
-void SM_updateDuty(uint32_t duty)
+void SM_updateDuty(uint16_t duty)
 {
+    duty_tracker = duty;
     switch (curr_step)
     {
         case 0:
