@@ -10,6 +10,19 @@ extern ADC_HandleTypeDef hadc;
 
 uint32_t currentBemfAdcChannel;
 
+static inline void ADC_Channel(uint32_t adc_ch)
+{
+
+  hadc.Instance->CR |= ADC_CR_ADSTP;
+  while(hadc.Instance->CR & ADC_CR_ADSTP);
+  /* Regular sequence configuration */
+  /* Set the channel selection register from the selected channel */
+  hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
+  hadc.Instance->CR |= ADC_CR_ADSTART;
+
+}
+
+
 typedef enum CONTROL_STATE_E
 {
     ALIGNMENT,  // rotor alignment

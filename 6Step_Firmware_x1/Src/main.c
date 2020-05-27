@@ -70,7 +70,7 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN 0 */
 
 // ADC Channel selection function copied from ST's MC SDK
-inline void ADC_Channel(uint32_t adc_ch)
+static inline void ADC_Channel(uint32_t adc_ch)
 {
 
   hadc.Instance->CR |= ADC_CR_ADSTP;
