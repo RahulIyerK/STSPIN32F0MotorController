@@ -496,13 +496,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
   {
   	  //read bemf
-		  SM_sampleBEMF();
+	  sampleBEMF();
 //		  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
   }
   else
   {
   	  //read current
-   		 SM_sampleCurrent();
+	  sampleCurrent();
 //   		 HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
 
 
