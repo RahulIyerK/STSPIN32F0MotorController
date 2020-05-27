@@ -5,10 +5,10 @@ void SM_init(); //initialize Step Manager to Step 0
 
 void SM_nextStep();
 
-void SM_sampleBEMF();
-void SM_sampleCurrent();
+uint32_t SM_getBEMFChannel();
 
-void SM_setSwitchingDuty(uint16_t duty);
+void SM_processBEMF(uint32_t bemf);
+void SM_updateDuty(uint32_t val);
 
 #endif //STEP_MANAGER_H
 

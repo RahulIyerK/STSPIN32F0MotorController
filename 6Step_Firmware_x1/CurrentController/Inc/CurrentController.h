@@ -3,11 +3,15 @@
 
 #include <stdint.h>
 
-#define PWM_COUNTER_MAX (100-1)
+#define HF_TIM_PERIOD (150-1)
 
-#define I_CONTROL_KP 60
-#define I_CONTROL_KI_SHIFT 5 // Ki = 0.03125
-#define VA_DUTY_SCALE_SHIFT 24 // gain of 6e-8
+// define KP by how current error (in ADC 12-bit representation) maps a current error to duty setpoint in range of 1-HF_ARR
+
+#define I_CONTROL_KP 2 // map current error = 500mA to duty ~= 122/150
+
+// KI affects how accumulated current error maps to increment in duty added to pterm-calculated duty
+// with shift notation, we assign duty increment of 1 for every accumulated error crosses a multiple of 2^shift
+#define I_CONTROL_KI_SHIFT 7 // = 1/128
 
 
 /*
@@ -19,14 +23,18 @@ CURRENT SENSE:
 - current error should be stored in 32-bit integer (difference of two 32-bit values)
 */
 
-
-typedef struct PI_params_S
+typedef struct ILoopParams_S
 {
     int32_t ierr;
-    int32_t integ_acc;
-} PI_params_S;
+    int32_t ierr_acc;
+    uint32_t iref;
+} ILoopParams;
 
-void PI_I_init();
-int PI_Iloop();
+
+void CC_setCurrentReference(uint32_t ref);
+uint32_t CC_runCurrentControlCycle();
+
+void CC_processCurrent(uint32_t samp);
+void CC_resetIntegral();
 
 #endif //CURRENT_CONTROLLER_H
