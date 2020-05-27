@@ -30,7 +30,9 @@ CONTROL_STATE controlState;
 // PHASE_C | PHASE_A | PHASE_B  
 
 int curr_step = 0;
+uint8_t alignment_index = 0;
 uint8_t ramp_index = 0;
+
 
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
@@ -72,12 +74,12 @@ void configStep()
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
             CC_setCurrentReference(ALIGNMENT_CURRENT_REF);
 
-            curr_step++;
-            if (curr_step == NUM_ALIGNMENT_PERIODS)
+            alignment_index++;
+            if (alignment_index == NUM_ALIGNMENT_PERIODS)
             {
                 controlState = RAMP;
-                curr_step = 1;
-                ramp_index = 0;
+                ramp_index = 0; // make sure ramp starts on index 0
+                alignment_index = 0; //reset for future alignments (?)
             }
         }
         break;
@@ -91,9 +93,8 @@ void configStep()
                 ramp_index++;
             }
 
-            //TODO: zero-cross detection
+            //TODO: startup zero-cross detection validation
             
-
         }
         break;
         case RUN:
@@ -174,6 +175,7 @@ void SM_init()
     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // open PHASE_C LS FET
 
     curr_step = 0;
+    alignment_index = 0;
     ramp_index = 0;
     controlState = ALIGNMENT; //start up in ALIGNMENT
     configStep();
@@ -182,41 +184,47 @@ void SM_init()
 
 void SM_nextStep()
 {
-    curr_step++;
-
-    if (curr_step >= 6) //circular
+    if (controlState == RAMP || controlState == RUN)
     {
-        curr_step = 0;
+        curr_step++;
+
+        if (curr_step >= 6) //circular
+        {
+            curr_step = 0;
+        }
     }
-    
+
     configStep();
 
-    //synchronize the ADC read with the step switching
-    switch (curr_step)
+    if (controlState == RAMP || controlState == RUN)
     {
-        case 0:
-        	currentBemfAdcChannel = ADC_PHASE_A;
-        break;
-        case 1:
-            currentBemfAdcChannel = ADC_PHASE_C;
-        break;
-        case 2:
-            currentBemfAdcChannel = ADC_PHASE_B;
-        break;
-        case 3:
-            currentBemfAdcChannel = ADC_PHASE_A;
-        break;
-        case 4:
-            currentBemfAdcChannel = ADC_PHASE_C;
-        break;
-        case 5:
-            currentBemfAdcChannel = ADC_PHASE_B;
-        break;
-    }
+        //synchronize the ADC read with the step switching
+        switch (curr_step)
+        {
+            case 0:
+                currentBemfAdcChannel = ADC_PHASE_A;
+            break;
+            case 1:
+                currentBemfAdcChannel = ADC_PHASE_C;
+            break;
+            case 2:
+                currentBemfAdcChannel = ADC_PHASE_B;
+            break;
+            case 3:
+                currentBemfAdcChannel = ADC_PHASE_A;
+            break;
+            case 4:
+                currentBemfAdcChannel = ADC_PHASE_C;
+            break;
+            case 5:
+                currentBemfAdcChannel = ADC_PHASE_B;
+            break;
+        }
 
-    if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
-    {
-    	ADC_Channel(currentBemfAdcChannel);
+        if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
+        {
+            ADC_Channel(currentBemfAdcChannel);
+        }
     }
 }
 
