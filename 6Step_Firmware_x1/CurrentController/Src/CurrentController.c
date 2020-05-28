@@ -2,31 +2,39 @@
 #include <math.h>
 #include "fixptmath.h"
 
-volatile PI_params_S Iloop_params;
+ILoopParams iloopParams;
 
-
-void PI_I_init()
+void CC_processCurrent(uint32_t samp)
 {
-    Iloop_params.ierr = 0;
-    Iloop_params.integ_acc = 0;
+    iloopParams.ierr = iloopParams.iref - samp;
+    iloopParams.ierr_acc += iloopParams.ierr;
 }
 
-int PI_Iloop()
+void CC_setCurrentReference(uint32_t ref)
 {
-    int32_t pterm = MUL32_Q0_UFIX_SFIX(I_CONTROL_KP, Iloop_params.ierr);
-    int32_t va = ADD32_Q0_SFIX_SFIX((Iloop_params.integ_acc >> I_CONTROL_KI_SHIFT), pterm);
+    iloopParams.iref = ref;
+}
 
-    if (va < 0)
+uint16_t CC_runCurrentControlCycle()
+{
+    int32_t pterm = MUL32_Q0_UFIX_SFIX(I_CONTROL_KP, iloopParams.ierr);
+    int32_t pwm_compare_val = ADD32_Q0_SFIX_SFIX((iloopParams.ierr_acc >> I_CONTROL_KI_SHIFT), pterm);
+
+    //saturation
+    if (pwm_compare_val < 0)
     {
         return 0;
     }
-
-    uint32_t pwm_compare_val = va * VA_DUTY_SCALE_SHIFT;
     
-    if (pwm_compare_val > PWM_COUNTER_MAX)
+    if (pwm_compare_val > HF_TIM_PERIOD)
     {
-        return PWM_COUNTER_MAX;
+        return HF_TIM_PERIOD;
     }
 
-    return pwm_compare_val;
+    return (uint16_t)pwm_compare_val;
+}
+
+void CC_resetIntegral()
+{
+    iloopParams.ierr_acc = 0;
 }

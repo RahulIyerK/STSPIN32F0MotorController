@@ -44,6 +44,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F0xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;../StepManager/Inc&quot;"/>
+									<listOptionValue builtIn="false" value="../FixedPointMath/Inc"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1096329468" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>

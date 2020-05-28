@@ -26,11 +26,13 @@
 #include "stm32f0xx_hal.h"
 #include "CurrentController.h"
 #include "StepManager.h"
+#include "StepManager_defs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define ADC_CURRENT_CHANNEL (ADC_CHANNEL_4)
+#define ICONTROL_PERIOD (4)
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -67,17 +69,33 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+// ADC Channel selection function copied from ST's MC SDK
+static inline void ADC_Channel(uint32_t adc_ch)
+{
 
-//volatile uint32_t adc_buffer[100] = {0};
-////volatile uint32_t start_tim[100] = {0};//commented out because program was too big otherwise
-//volatile uint32_t end_tim[200] = {0};
+  hadc.Instance->CR |= ADC_CR_ADSTP;
+  while(hadc.Instance->CR & ADC_CR_ADSTP);
+  /* Regular sequence configuration */
+  /* Set the channel selection register from the selected channel */
+  hadc.Instance->CHSELR = ADC_CHSELR_CHANNEL(adc_ch);
+  hadc.Instance->CR |= ADC_CR_ADSTART;
 
+}
 
-volatile uint32_t c_counter; //counter for current loop characterization
-volatile uint32_t c_tim[200];
-volatile int32_t testcnt;
-volatile uint8_t toggle;
+void sampleBEMF()
+{
+  uint32_t bemf = HAL_ADC_GetValue(&hadc);
+  SM_processBEMF(bemf);
+  ADC_Channel(ADC_CURRENT_CHANNEL);
+}
 
+void sampleCurrent()
+{
+	uint32_t current = HAL_ADC_GetValue(&hadc);
+	CC_processCurrent(current);
+  uint32_t bemfchannel = SM_getBEMFChannel();
+	ADC_Channel(bemfchannel);
+}
 
 /* USER CODE END 0 */
 
@@ -88,8 +106,7 @@ volatile uint8_t toggle;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	  testcnt = 0;
-	  toggle = 0;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -265,7 +282,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
-  htim1.Init.Period = 150-1;
+  htim1.Init.Period = HF_TIM_PERIOD;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -337,7 +354,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 100-1;
+  htim2.Init.Period = ALIGNMENT_ARR;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -383,7 +400,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 3;
+  htim3.Init.Period = ICONTROL_PERIOD;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -479,13 +496,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
   {
   	  //read bemf
-		  SM_sampleBEMF();
+	  sampleBEMF();
 //		  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
   }
   else
   {
   	  //read current
-   		 SM_sampleCurrent();
+	  sampleCurrent();
 //   		 HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
 
 
