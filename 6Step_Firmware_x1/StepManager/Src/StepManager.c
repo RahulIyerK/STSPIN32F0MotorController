@@ -8,7 +8,7 @@ extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern ADC_HandleTypeDef hadc;
 
-uint32_t currentBemfAdcChannel;
+volatile uint32_t currentBemfAdcChannel;
 
 static inline void ADC_Channel(uint32_t adc_ch)
 {
@@ -44,112 +44,112 @@ CONTROL_STATE controlState;
 // PHASE_B | PHASE_A | PHASE_C
 // PHASE_C | PHASE_A | PHASE_B  
 
-int curr_step = 0;
+volatile uint8_t curr_step = 0;
 uint8_t alignment_index = 0;
 uint8_t ramp_index = 0;
 
 
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
-1000,
-1000,
-1000,
-1000,
-1000,
-1000,
-1000,
-500,
-500,
-500,
-500,
-500,
-500,
-500,
-500,
-300,
-300,
-300,
-300,
-300,
-250,
-250,
-250,
-250,
-250,
-200,
-200,
-200,
-200,
-200,
-180,
-180,
-180,
-180,
-180,
-155,
-155,
-155,
-155,
-155,
-140,
-140,
-140,
-140,
-140,
-130,
-130,
-130,
-130,
-130,
-120,
-120,
-120,
-120,
-120,
-100,
-100,
-100,
-100,
-90,
-90,
-90,
-80,
-80,
-75,
-75,
-70,
-70,
-70,
-66,
-66,
-62,
-62,
-60,
-60,
-57,
-57,
-55,
-55,
-53,
-53,
-50,
-50,
-47,
-47,
-45,
-45,
-44,
-44,
-43,
-43,
-42,
-42,
-41,
-41,
-41,
-40,
-40,
-40
+		1000,
+		1000,
+		1000,
+		1000,
+		1000,
+		1000,
+		1000,
+		500,
+		500,
+		500,
+		500,
+		500,
+		500,
+		500,
+		500,
+		300,
+		300,
+		300,
+		300,
+		300,
+		250,
+		250,
+		250,
+		250,
+		250,
+		200,
+		200,
+		200,
+		200,
+		200,
+		180,
+		180,
+		180,
+		180,
+		180,
+		155,
+		155,
+		155,
+		155,
+		155,
+		140,
+		140,
+		140,
+		140,
+		140,
+		130,
+		130,
+		130,
+		130,
+		130,
+		120,
+		120,
+		120,
+		120,
+		120,
+		100,
+		100,
+		100,
+		100,
+		90,
+		90,
+		90,
+		80,
+		80,
+		75,
+		75,
+		70,
+		70,
+		70,
+		66,
+		66,
+		62,
+		62,
+		60,
+		60,
+		57,
+		57,
+		55,
+		55,
+		53,
+		53,
+		50,
+		50,
+		47,
+		47,
+		45,
+		45,
+		44,
+		44,
+		43,
+		43,
+		42,
+		42,
+		41,
+		41,
+		41,
+		40,
+		40,
+		40
 };
 
 uint16_t SM_fetchRampARR(uint8_t index)
@@ -213,7 +213,6 @@ void configStep()
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
     // TODO: probably don't have to be this aggressive about turning everything off before changing steps
 
-    CC_resetIntegral(); // TODO: how often should integral be reset?
 
     switch (controlState)
     {
@@ -237,7 +236,7 @@ void configStep()
         case RAMP:
         {
             CC_setCurrentReference(RAMP_CURRENT_REF);
-            if (ramp_index < RAMP_TABLE_ENTRIES)
+            if (ramp_index < 68) //RAMP_TABLE_ENTRIES)
             {
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
                 __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
@@ -297,6 +296,7 @@ void SM_nextStep()
 
         if (curr_step >= 6) //circular
         {
+            CC_resetIntegral(); // TODO: how often should integral be reset?
             curr_step = 0;
         }
     }
@@ -359,22 +359,34 @@ void SM_updateDuty(uint16_t duty)
     switch (curr_step)
     {
         case 0:
+            __disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+            __enable_irq();
         break;
         case 1:
+            __disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+            __enable_irq();
         break;
         case 2:
+        	__disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+            __enable_irq();
         break;
         case 3:
+        	__disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+            __enable_irq();
         break;
         case 4:
+        	__disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+            __enable_irq();
         break;
         case 5:
+        	__disable_irq();
             __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+            __enable_irq();
         break;
     }
 }
