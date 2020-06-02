@@ -53,103 +53,43 @@ uint16_t ramp_table [RAMP_TABLE_ENTRIES] =
 {
 		1000,
 		1000,
-		1000,
-		1000,
-		1000,
-		1000,
-		1000,
 		500,
 		500,
 		500,
 		500,
 		500,
-		500,
-		500,
-		500,
-		300,
-		300,
-		300,
-		300,
-		300,
-		250,
-		250,
-		250,
-		250,
 		250,
 		200,
-		200,
-		200,
-		200,
-		200,
-		180,
-		180,
-		180,
-		180,
-		180,
-		155,
-		155,
-		155,
-		155,
-		155,
-		140,
-		140,
-		140,
-		140,
-		140,
-		130,
-		130,
-		130,
-		130,
-		130,
-		120,
-		120,
-		120,
-		120,
-		120,
+		131,
 		100,
-		100,
-		100,
-		100,
-		90,
-		90,
-		90,
 		80,
-		80,
-		75,
-		75,
 		70,
-		70,
-		70,
-		66,
-		66,
 		62,
-		62,
-		60,
-		60,
-		57,
-		57,
 		55,
-		55,
-		53,
-		53,
 		50,
-		50,
-		47,
-		47,
-		45,
-		45,
-		44,
-		44,
+		46,
 		43,
-		43,
-		42,
-		42,
-		41,
-		41,
-		41,
 		40,
-		40,
-		40
+		38,
+		36,
+		34,
+		32,
+		30,
+		28,
+		27,
+		26,
+		25,
+		24,
+		23,
+		22,
+		21,
+		20,
+		20,
+		20,
+		20,
+		20,
+		20,
+		20
 };
 
 uint16_t SM_fetchRampARR(uint8_t index)
@@ -221,7 +161,7 @@ void configStep()
             // align to intermediate position before step 0
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET);   // set PHASE_A GPIO
             CC_setCurrentReference(ALIGNMENT_CURRENT_REF);
 
             alignment_index++;
@@ -235,12 +175,16 @@ void configStep()
         break;
         case RAMP:
         {
-            CC_setCurrentReference(RAMP_CURRENT_REF);
-            if (ramp_index < 68) //RAMP_TABLE_ENTRIES)
+            if (ramp_index < RAMP_TABLE_ENTRIES)
             {
+                CC_setCurrentReference(RAMP_CURRENT_REF);
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
                 __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
                 ramp_index++;
+            }
+            else
+            {
+            	CC_setCurrentReference(RAMP_HOLD_CURRENT);
             }
             setupFETs();
             //TODO: startup zero-cross detection validation
@@ -360,32 +304,38 @@ void SM_updateDuty(uint16_t duty)
     {
         case 0:
             __disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);
+            (&htim1)->Instance->CCR3 = duty;
             __enable_irq();
         break;
         case 1:
             __disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);
+            (&htim1)->Instance->CCR1 = duty;
             __enable_irq();
         break;
         case 2:
         	__disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);
+            (&htim1)->Instance->CCR1 = duty;
             __enable_irq();
         break;
         case 3:
         	__disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);
+            (&htim1)->Instance->CCR2 = duty;
             __enable_irq();
         break;
         case 4:
         	__disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);
+            (&htim1)->Instance->CCR2 = duty;
             __enable_irq();
         break;
         case 5:
         	__disable_irq();
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);
+            (&htim1)->Instance->CCR3 = duty;
             __enable_irq();
         break;
     }
