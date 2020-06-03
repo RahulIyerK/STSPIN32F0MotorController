@@ -47,7 +47,10 @@ CONTROL_STATE controlState;
 volatile uint8_t curr_step = 0;
 uint8_t alignment_index = 0;
 uint8_t ramp_index = 0;
-
+uint8_t bemf_rising = 0;
+uint16_t run_arr = 0;
+uint8_t arr_set = 0;
+uint8_t bemf_check_cnt = 0;
 
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
@@ -106,6 +109,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
+                    (&htim1)->Instance->CCR3 = duty_tracker;
                 }
                 break;
                 case 1:
@@ -113,6 +117,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+                    (&htim1)->Instance->CCR1 = duty_tracker;
+
                 }
                 break;
                 case 2:
@@ -120,6 +126,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+                    (&htim1)->Instance->CCR1 = duty_tracker;
+
                 }
                 break;
                 case 3:
@@ -127,6 +135,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+                    (&htim1)->Instance->CCR2 = duty_tracker;
+
                 }
                 break;
                 case 4:
@@ -134,6 +144,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+                    (&htim1)->Instance->CCR2 = duty_tracker;
+
                 }
                 break;
                 case 5:
@@ -141,6 +153,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B  
+                    (&htim1)->Instance->CCR3 = duty_tracker;
+
                 }
                 break;
 
@@ -153,6 +167,14 @@ void configStep()
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
     // TODO: probably don't have to be this aggressive about turning everything off before changing steps
 
+    if (curr_step % 2)
+    {
+    	bemf_rising = 1;
+    }
+    else
+    {
+    	bemf_rising = 0;
+    }
 
     switch (controlState)
     {
@@ -175,7 +197,7 @@ void configStep()
         break;
         case RAMP:
         {
-            if (ramp_index < RAMP_TABLE_ENTRIES)
+            if (ramp_index < 19) //RAMP_TABLE_ENTRIES)
             {
                 CC_setCurrentReference(RAMP_CURRENT_REF);
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
@@ -184,12 +206,13 @@ void configStep()
             }
             else
             {
-            	CC_setCurrentReference(RAMP_HOLD_CURRENT);
+            	CC_setCurrentReference(RUN_START_CURRENT);
+            	run_arr = SM_fetchRampARR(ramp_index);
+                controlState = RUN;
             }
             setupFETs();
-            //TODO: startup zero-cross detection validation
-            //TODO: entry condition into RUN state
             
+
         }
         break;
         case RUN:
@@ -225,6 +248,7 @@ void SM_init()
     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // open PHASE_C LS FET
 
     curr_step = 0;
+    arr_set = 1; //initialize so that run state ARR control only starts on the first full run step
     alignment_index = 0;
     ramp_index = 0;
     controlState = ALIGNMENT; //start up in ALIGNMENT
@@ -284,16 +308,49 @@ uint32_t SM_getBEMFChannel()
     return currentBemfAdcChannel;
 }
 
+static inline void updateARR(uint16_t ctr)
+{
+	run_arr = ctr + (run_arr >> 1);
+	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr);
+	arr_set = 1;
+}
+
 void SM_processBEMF(uint32_t bemf)
 {
     if (controlState == RUN)
     {
-        /*
-            set ARR
-        */
-          // if(bemf < BEMF_thresh){
-//		__HAL_TIM_SET_AUTORELOAD(&htim2, __HAL_TIM_GET_COUNTER(&htim2) << 1);
-	    //}
+    	uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+    	if (ctr == 0)
+    	{
+    		arr_set = 0;
+    		bemf_check_cnt = 0;
+    	}
+    	if (ctr > DEMAG_NUM_PERIODS)
+    	{
+			if ((bemf_rising == 1)&&(arr_set == 0)) //rising BEMF
+			{
+				if (bemf > BEMF_ZC_THRESH)
+				{
+					bemf_check_cnt++;
+				}
+				if (bemf_check_cnt == ZC_DETECTIONS_FOR_VALID)
+				{
+					updateARR(ctr);
+				}
+			}
+			if ((bemf_rising == 0)&&(arr_set == 0)) //falling BEMF
+			{
+				if (bemf < BEMF_ZC_THRESH)
+				{
+					bemf_check_cnt++;
+				}
+				if (bemf_check_cnt == ZC_DETECTIONS_FOR_VALID)
+				{
+					updateARR(ctr);
+				}
+			}
+    	}
+
     }
 }
 
@@ -304,37 +361,31 @@ void SM_updateDuty(uint16_t duty)
     {
         case 0:
             __disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);
             (&htim1)->Instance->CCR3 = duty;
             __enable_irq();
         break;
         case 1:
             __disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);
             (&htim1)->Instance->CCR1 = duty;
             __enable_irq();
         break;
         case 2:
         	__disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty);
             (&htim1)->Instance->CCR1 = duty;
             __enable_irq();
         break;
         case 3:
         	__disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);
             (&htim1)->Instance->CCR2 = duty;
             __enable_irq();
         break;
         case 4:
         	__disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty);
             (&htim1)->Instance->CCR2 = duty;
             __enable_irq();
         break;
         case 5:
         	__disable_irq();
-//            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty);
             (&htim1)->Instance->CCR3 = duty;
             __enable_irq();
         break;

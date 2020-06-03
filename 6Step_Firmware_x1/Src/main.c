@@ -93,7 +93,7 @@ void sampleCurrent()
 {
 	uint32_t current = HAL_ADC_GetValue(&hadc);
 	CC_processCurrent(current);
-  uint32_t bemfchannel = SM_getBEMFChannel();
+	uint32_t bemfchannel = SM_getBEMFChannel();
 	ADC_Channel(bemfchannel);
 }
 
@@ -127,6 +127,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  while (HAL_GPIO_ReadPin(GPIOF, GPIO_PIN_1) == GPIO_PIN_SET); //wait until button pressed to do anything
   MX_ADC_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -211,7 +212,7 @@ static void MX_ADC_Init(void)
   hadc.Init.Resolution = ADC_RESOLUTION_12B;
   hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
-  hadc.Init.EOCSelection = ADC_EOC_SEQ_CONV;// ADC_EOC_SINGLE_CONV;
+  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc.Init.LowPowerAutoWait = DISABLE;
   hadc.Init.LowPowerAutoPowerOff = DISABLE;
   hadc.Init.ContinuousConvMode = DISABLE;
@@ -219,7 +220,7 @@ static void MX_ADC_Init(void)
   hadc.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_TRGO;
   hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc.Init.DMAContinuousRequests = DISABLE;
-  hadc.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN; //ADC_OVR_DATA_PRESERVED;
+  hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   if (HAL_ADC_Init(&hadc) != HAL_OK)
   {
     Error_Handler();
@@ -440,9 +441,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -451,11 +449,10 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOF, GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : PF1 PF6 PF7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  /*Configure GPIO pin : PF1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA6 */
@@ -472,6 +469,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PF6 PF7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -484,26 +488,16 @@ volatile double isamp, iref, bemf_estimation, motor_vsupply;
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
   /* This is called after the conversion is completed */
 
-//	if (toggle)
-//	{
-//		testcnt++;
-//	}
-//	else
-//	{
-//		testcnt--;
-//	}
-//	toggle = !toggle;
+
   if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
   {
   	  //read bemf
 	  sampleBEMF();
-//		  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_SET);
   }
   else
   {
   	  //read current
 	  sampleCurrent();
-//   		 HAL_GPIO_WritePin(GPIOF, GPIO_PIN_1, GPIO_PIN_RESET);
 
 
   }
