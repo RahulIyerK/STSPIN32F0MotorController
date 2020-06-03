@@ -197,7 +197,7 @@ void configStep()
         break;
         case RAMP:
         {
-            if (ramp_index < RAMP_TABLE_ENTRIES)
+            if (ramp_index < RAMP_END_ENTRY)
             {
                 CC_setCurrentReference(RAMP_CURRENT_REF);
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
@@ -206,9 +206,11 @@ void configStep()
             }
             else
             {
-            	CC_setCurrentReference(RUN_START_CURRENT);
+            	//ramp exit
+				CC_setCurrentReference(RAMP_EXIT_CURRENT);
+
             	run_arr = SM_fetchRampARR(ramp_index);
-                controlState = RUN;
+//                controlState = RUN;
             }
             setupFETs();
             
@@ -310,7 +312,16 @@ uint32_t SM_getBEMFChannel()
 
 static inline void updateARR(uint16_t ctr)
 {
-	run_arr = ctr + (run_arr >> 1);
+	uint16_t run_arr_temp = ctr + (run_arr >> 1);
+//	if (((int16_t) run_arr_temp - (int16_t) run_arr) > 5)
+//	{
+//		run_arr_temp = run_arr + 5;
+//	}
+//	if (((int16_t) run_arr_temp - (int16_t) run_arr) < -5)
+//	{
+//		run_arr_temp = run_arr - 5;
+//	}
+	run_arr = run_arr_temp;
 	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr);
 	arr_set = 1;
 }
@@ -320,7 +331,7 @@ void SM_processBEMF(uint32_t bemf)
     if (controlState == RUN)
     {
     	uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
-    	if (ctr == 0)
+    	if (ctr <= DEMAG_NUM_PERIODS)
     	{
     		arr_set = 0;
     		bemf_check_cnt = 0;
