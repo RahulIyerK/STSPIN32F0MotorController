@@ -197,7 +197,7 @@ void configStep()
         break;
         case RAMP:
         {
-            if (ramp_index < 19) //RAMP_TABLE_ENTRIES)
+            if (ramp_index < RAMP_TABLE_ENTRIES)
             {
                 CC_setCurrentReference(RAMP_CURRENT_REF);
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
