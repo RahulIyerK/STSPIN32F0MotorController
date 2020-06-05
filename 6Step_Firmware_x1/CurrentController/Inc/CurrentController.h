@@ -4,8 +4,10 @@
 #include <stdint.h>
 
 #define HF_TIM_PERIOD (150-1)
-#define I_CONTROL_MIN_PERIOD 20
-#define I_CONTROL_MAX_PERIOD 140
+#define ICONTROL_PERIOD 4
+#define I_CONTROL_MIN_DUTY 20
+#define I_CONTROL_MAX_DUTY 140
+
 
 // define KP by how the current error (in ADC 12-bit representation, [0,4096]) maps to duty setpoint in range of [0,HF_ARR]
 

@@ -24,7 +24,6 @@ static inline void ADC_Channel(uint32_t adc_ch)
 
 volatile uint16_t duty_tracker;
 
-
 typedef enum CONTROL_STATE_E
 {
     ALIGNMENT,  // rotor alignment
@@ -52,46 +51,76 @@ uint16_t run_arr = 0;
 uint8_t arr_set = 0;
 uint8_t bemf_check_cnt = 0;
 
+volatile uint8_t force_zero_duty;
+
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
-		1000,
-		1000,
 		500,
+
 		500,
-		500,
-		500,
-		500,
+
 		250,
+
 		200,
+
 		131,
+
 		100,
+
 		80,
+
 		70,
+
 		62,
+
 		55,
+
 		50,
+
 		46,
+
 		43,
+
 		40,
+
 		38,
+
 		36,
+
 		34,
+
 		32,
+
 		30,
+
 		28,
+
 		27,
+
 		26,
+
 		25,
+
 		24,
+
 		23,
+
 		22,
+
 		21,
+
 		20,
+
 		20,
+
 		20,
+
 		20,
+
 		20,
+
 		20,
+
 		20
 };
 
@@ -109,7 +138,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
-                    (&htim1)->Instance->CCR3 = duty_tracker;
+//                    (&htim1)->Instance->CCR3 = duty_tracker;
                 }
                 break;
                 case 1:
@@ -117,7 +146,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-                    (&htim1)->Instance->CCR1 = duty_tracker;
+//                    (&htim1)->Instance->CCR1 = duty_tracker;
 
                 }
                 break;
@@ -126,7 +155,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
-                    (&htim1)->Instance->CCR1 = duty_tracker;
+//                    (&htim1)->Instance->CCR1 = duty_tracker;
 
                 }
                 break;
@@ -135,7 +164,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
-                    (&htim1)->Instance->CCR2 = duty_tracker;
+//                    (&htim1)->Instance->CCR2 = duty_tracker;
 
                 }
                 break;
@@ -144,7 +173,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
-                    (&htim1)->Instance->CCR2 = duty_tracker;
+//                    (&htim1)->Instance->CCR2 = duty_tracker;
 
                 }
                 break;
@@ -153,7 +182,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B  
-                    (&htim1)->Instance->CCR3 = duty_tracker;
+//                    (&htim1)->Instance->CCR3 = duty_tracker;
 
                 }
                 break;
@@ -207,10 +236,61 @@ void configStep()
             else
             {
             	//ramp exit
+//            	curr_step++;
+//                if (curr_step >= 6) //circular
+//                {
+//                    curr_step = 0;
+//                    CC_resetIntegral(); // TODO: how often should integral be reset?
+//                }
+//                //synchronize the ADC read with the step switching
+//				switch (curr_step)
+//				{
+//					case 0:
+//						currentBemfAdcChannel = ADC_PHASE_A;
+//					break;
+//					case 1:
+//						currentBemfAdcChannel = ADC_PHASE_C;
+//					break;
+//					case 2:
+//						currentBemfAdcChannel = ADC_PHASE_B;
+//					break;
+//					case 3:
+//						currentBemfAdcChannel = ADC_PHASE_A;
+//					break;
+//					case 4:
+//						currentBemfAdcChannel = ADC_PHASE_C;
+//					break;
+//					case 5:
+//						currentBemfAdcChannel = ADC_PHASE_B;
+//					break;
+//				}
+//			    if (curr_step % 2)
+//			    {
+//			    	bemf_rising = 1;
+//			    }
+//			    else
+//			    {
+//			    	bemf_rising = 0;
+//			    }
+//
+//				if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
+//				{
+//					ADC_Channel(currentBemfAdcChannel);
+//				}
+
 				CC_setCurrentReference(RAMP_EXIT_CURRENT);
+				if (bemf_rising)
+				{
+					force_zero_duty = 1;
+				}
+				else
+				{
+					force_zero_duty = 0;
+				}
 
             	run_arr = SM_fetchRampARR(ramp_index);
 //                controlState = RUN;
+
             }
             setupFETs();
             
@@ -220,6 +300,7 @@ void configStep()
         case RUN:
         {
             //TODO: set current reference based on speed control cycle output
+        	run_arr = SM_fetchRampARR(ramp_index);
             setupFETs();
             
         }
@@ -250,11 +331,15 @@ void SM_init()
     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // open PHASE_C LS FET
 
     curr_step = 0;
-    arr_set = 1; //initialize so that run state ARR control only starts on the first full run step
+    arr_set = 1;
     alignment_index = 0;
     ramp_index = 0;
     controlState = ALIGNMENT; //start up in ALIGNMENT
+
+    bemf_check_cnt = 0;
+    force_zero_duty = 0;
     configStep();
+
 
 }
 
@@ -266,8 +351,8 @@ void SM_nextStep()
 
         if (curr_step >= 6) //circular
         {
-            CC_resetIntegral(); // TODO: how often should integral be reset?
             curr_step = 0;
+            CC_resetIntegral(); // TODO: how often should integral be reset?
         }
     }
 
@@ -312,22 +397,24 @@ uint32_t SM_getBEMFChannel()
 
 static inline void updateARR(uint16_t ctr)
 {
-	uint16_t run_arr_temp = ctr + (run_arr >> 1);
-//	if (((int16_t) run_arr_temp - (int16_t) run_arr) > 5)
-//	{
-//		run_arr_temp = run_arr + 5;
-//	}
-//	if (((int16_t) run_arr_temp - (int16_t) run_arr) < -5)
-//	{
-//		run_arr_temp = run_arr - 5;
-//	}
-	run_arr = run_arr_temp;
+	run_arr = ctr + (run_arr >> 1);
 	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr);
 	arr_set = 1;
 }
 
 void SM_processBEMF(uint32_t bemf)
 {
+//	if (controlState == END_RAMP)
+//	{
+//		if (bemf_rising)
+//		{
+//			if get counter == 1/2 * step_time && bemf == 0
+//					half_ok
+//			if get_counter == 3/4 * step_time && bemf == nonzero
+//					full_ok
+//
+//		}
+//	}
     if (controlState == RUN)
     {
     	uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
