@@ -7,7 +7,7 @@ extern volatile uint8_t force_zero_duty;
 
 void CC_processCurrent(uint32_t samp)
 {
-    iloopParams.ierr = iloopParams.iref - samp;
+    iloopParams.ierr = (int32_t)iloopParams.iref - (int32_t)samp;
     iloopParams.ierr_acc += iloopParams.ierr;
 }
 

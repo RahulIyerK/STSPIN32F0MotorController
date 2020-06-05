@@ -1,8 +1,10 @@
 #ifndef SPEED_CONTROLLER_H
 #define SPEED_CONTROLLER_H
+#include <stdint.h>
 
-#define w_CONTROL_MIN_IREF 10
-#define w_CONTROL_MAX_IREF 245
+#define W_CONTROL_MIN_IREF 10
+#define W_CONTROL_MAX_IREF 245
+#define W_CONTROL_KP 35
 
 typedef struct wLoopParams_S
 {
