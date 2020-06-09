@@ -1,6 +1,7 @@
 #include "StepManager.h"
 #include "StepManager_defs.h"
 #include "CurrentController.h"
+#include "SpeedController.h"
 #include "stm32f0xx_hal.h"
 #include <stdint.h>
 
@@ -48,10 +49,12 @@ uint8_t alignment_index = 0;
 uint8_t ramp_index = 0;
 uint8_t bemf_rising = 0;
 uint16_t run_arr = 0;
+uint16_t run_arr_adj = 0;
 uint8_t arr_set = 0;
 uint8_t bemf_check_cnt = 0;
 
 volatile uint8_t force_zero_duty;
+uint8_t run_counter;
 
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
@@ -233,76 +236,48 @@ void configStep()
                 __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
                 ramp_index++;
             }
+            else if (ramp_index < RAMP_HOLD_END_ENTRY) //spin in stepper drive for a certain number of steps to stabilize stepper drive waveform
+            {
+				CC_setCurrentReference(RAMP_EXIT_CURRENT);
+				ramp_index++;
+            }
             else
             {
-            	//ramp exit
-//            	curr_step++;
-//                if (curr_step >= 6) //circular
-//                {
-//                    curr_step = 0;
-//                    CC_resetIntegral(); // TODO: how often should integral be reset?
-//                }
-//                //synchronize the ADC read with the step switching
-//				switch (curr_step)
-//				{
-//					case 0:
-//						currentBemfAdcChannel = ADC_PHASE_A;
-//					break;
-//					case 1:
-//						currentBemfAdcChannel = ADC_PHASE_C;
-//					break;
-//					case 2:
-//						currentBemfAdcChannel = ADC_PHASE_B;
-//					break;
-//					case 3:
-//						currentBemfAdcChannel = ADC_PHASE_A;
-//					break;
-//					case 4:
-//						currentBemfAdcChannel = ADC_PHASE_C;
-//					break;
-//					case 5:
-//						currentBemfAdcChannel = ADC_PHASE_B;
-//					break;
-//				}
-//			    if (curr_step % 2)
-//			    {
-//			    	bemf_rising = 1;
-//			    }
-//			    else
-//			    {
-//			    	bemf_rising = 0;
-//			    }
-//
-//				if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim1))
-//				{
-//					ADC_Channel(currentBemfAdcChannel);
-//				}
-
-				CC_setCurrentReference(RAMP_EXIT_CURRENT);
-				if (bemf_rising)
-				{
-					force_zero_duty = 1;
-				}
-				else
-				{
-					force_zero_duty = 0;
-				}
-
             	run_arr = SM_fetchRampARR(ramp_index);
-//                controlState = RUN;
-
+                wC_setSpeedReference(run_arr); //TODO: get from pot (?)
+            	run_counter = 2;
+            	force_zero_duty = 0;
+                controlState = RUN;
             }
             setupFETs();
             
-
         }
         break;
         case RUN:
         {
-            //TODO: set current reference based on speed control cycle output
-        	run_arr = SM_fetchRampARR(ramp_index);
+        	run_counter++;
+        	if (run_counter == RUN_W_CONTROL_INTERVAL)
+        	{
+        		run_counter = 0;
+        	}
+
+        	if (run_counter == 0)
+        	{
+        		force_zero_duty = 1;
+        	}
+        	else
+        	{
+        		force_zero_duty = 0;
+        	}
+
+        	if (run_counter == 1)
+        	{
+            	uint32_t new_iref = wC_runSpeedControlCycle(run_arr_adj);
+            	CC_setCurrentReference(new_iref);
+        	}
+
+
             setupFETs();
-            
         }
         break;
     }
@@ -338,8 +313,10 @@ void SM_init()
 
     bemf_check_cnt = 0;
     force_zero_duty = 0;
-    configStep();
+    run_arr = 0;
+    run_counter = 2;
 
+    configStep();
 
 }
 
@@ -397,31 +374,78 @@ uint32_t SM_getBEMFChannel()
 
 static inline void updateARR(uint16_t ctr)
 {
-	run_arr = ctr + (run_arr >> 1);
-	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr);
+	run_arr_adj = ctr + (run_arr >> 1);
+//	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr_adj);
 	arr_set = 1;
 }
 
 void SM_processBEMF(uint32_t bemf)
 {
-//	if (controlState == END_RAMP)
+//	if (controlState == EXIT_RAMP)
 //	{
 //		if (bemf_rising)
 //		{
-//			if get counter == 1/2 * step_time && bemf == 0
-//					half_ok
-//			if get_counter == 3/4 * step_time && bemf == nonzero
-//					full_ok
-//
+//			uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+//			if (ctr == (exit_ramp_arr>>1))
+//			{
+//				if (bemf == 0)
+//				{
+//					zc_half_ok = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//				}
+//			}
+//			else if ((ctr == ((3 * exit_ramp_arr)>>2)) && (zc_half_ok == 1))
+//			{
+//				if (bemf > BEMF_QUARTER_TILL_THRESH)
+//				{
+//					zc_aligned = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//					zc_aligned = 0;
+//				}
+//			}
+//		}
+//		else //bemf falling
+//		{
+//			uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+//			if ((ctr == (exit_ramp_arr>>2)))
+//			{
+//				if (bemf > BEMF_QUARTER_TILL_THRESH)
+//				{
+//					zc_half_ok = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//				}
+//			}
+//			else if ((ctr == (exit_ramp_arr>>1)) && (zc_half_ok == 1))
+//			{
+//				if (bemf == 0)
+//				{
+//					zc_aligned = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//					zc_aligned = 0;
+//				}
+//			}
 //		}
 //	}
-    if (controlState == RUN)
+    if ((controlState == RUN) && (run_counter == 0))
     {
     	uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
     	if (ctr <= DEMAG_NUM_PERIODS)
     	{
     		arr_set = 0;
     		bemf_check_cnt = 0;
+    		run_arr_adj = ((run_arr * 3)>>1);
     	}
     	if (ctr > DEMAG_NUM_PERIODS)
     	{
