@@ -1,6 +1,7 @@
 #include "StepManager.h"
 #include "StepManager_defs.h"
 #include "CurrentController.h"
+#include "SpeedController.h"
 #include "stm32f0xx_hal.h"
 #include <stdint.h>
 
@@ -8,7 +9,7 @@ extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern ADC_HandleTypeDef hadc;
 
-uint32_t currentBemfAdcChannel;
+volatile uint32_t currentBemfAdcChannel;
 
 static inline void ADC_Channel(uint32_t adc_ch)
 {
@@ -23,7 +24,6 @@ static inline void ADC_Channel(uint32_t adc_ch)
 }
 
 volatile uint16_t duty_tracker;
-
 
 typedef enum CONTROL_STATE_E
 {
@@ -44,68 +44,87 @@ CONTROL_STATE controlState;
 // PHASE_B | PHASE_A | PHASE_C
 // PHASE_C | PHASE_A | PHASE_B  
 
-int curr_step = 0;
+volatile uint8_t curr_step = 0;
 uint8_t alignment_index = 0;
 uint8_t ramp_index = 0;
+uint8_t bemf_rising = 0;
+uint16_t run_arr = 0;
+uint16_t run_arr_adj = 0;
+uint8_t arr_set = 0;
+uint8_t bemf_check_cnt = 0;
 
+volatile uint8_t force_zero_duty;
+uint8_t run_counter;
 
 uint16_t ramp_table [RAMP_TABLE_ENTRIES] = 
 {
-1000,
-1000,
-1000,
-1000,
-1000,
-1000,
-1000,
-500,
-500,
-500,
-500,
-500,
-500,
-500,
-500,
-300,
-300,
-300,
-300,
-300,
-250,
-250,
-250,
-250,
-250,
-200,
-200,
-200,
-200,
-200,
-180,
-180,
-180,
-180,
-180,
-155,
-155,
-155,
-155,
-155,
-140,
-140,
-140,
-140,
-140,
-130,
-130,
-130,
-130,
-130,
-120,
-120,
-120,
-120,
-120
+		500,
+
+		500,
+
+		250,
+
+		200,
+
+		131,
+
+		100,
+
+		80,
+
+		70,
+
+		62,
+
+		55,
+
+		50,
+
+		46,
+
+		43,
+
+		40,
+
+		38,
+
+		36,
+
+		34,
+
+		32,
+
+		30,
+
+		28,
+
+		27,
+
+		26,
+
+		25,
+
+		24,
+
+		23,
+
+		22,
+
+		21,
+
+		20,
+
+		20,
+
+		20,
+
+		20,
+
+		20,
+
+		20,
+
+		20
 };
 
 uint16_t SM_fetchRampARR(uint8_t index)
@@ -122,6 +141,7 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A GPIO
+//                    (&htim1)->Instance->CCR3 = duty_tracker;
                 }
                 break;
                 case 1:
@@ -129,6 +149,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+//                    (&htim1)->Instance->CCR1 = duty_tracker;
+
                 }
                 break;
                 case 2:
@@ -136,6 +158,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
+//                    (&htim1)->Instance->CCR1 = duty_tracker;
+
                 }
                 break;
                 case 3:
@@ -143,6 +167,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_SET);   // set   PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET); // reset PHASE_A
+//                    (&htim1)->Instance->CCR2 = duty_tracker;
+
                 }
                 break;
                 case 4:
@@ -150,6 +176,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
+//                    (&htim1)->Instance->CCR2 = duty_tracker;
+
                 }
                 break;
                 case 5:
@@ -157,6 +185,8 @@ void setupFETs()
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set   PHASE_A
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C
                     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_RESET); // reset PHASE_B  
+//                    (&htim1)->Instance->CCR3 = duty_tracker;
+
                 }
                 break;
 
@@ -169,7 +199,14 @@ void configStep()
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
     // TODO: probably don't have to be this aggressive about turning everything off before changing steps
 
-    CC_resetIntegral(); // TODO: how often should integral be reset?
+    if (curr_step % 2)
+    {
+    	bemf_rising = 1;
+    }
+    else
+    {
+    	bemf_rising = 0;
+    }
 
     switch (controlState)
     {
@@ -178,7 +215,7 @@ void configStep()
             // align to intermediate position before step 0
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_B, GPIO_PIN_SET);   // set   PHASE_B GPIO
             HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // reset PHASE_C GPIO
-            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_SET);   // set PHASE_A GPIO
+            HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_A, GPIO_PIN_RESET);   // set PHASE_A GPIO
             CC_setCurrentReference(ALIGNMENT_CURRENT_REF);
 
             alignment_index++;
@@ -192,24 +229,55 @@ void configStep()
         break;
         case RAMP:
         {
-            CC_setCurrentReference(RAMP_CURRENT_REF);
-            if (ramp_index < RAMP_TABLE_ENTRIES)
+            if (ramp_index < RAMP_END_ENTRY)
             {
+                CC_setCurrentReference(RAMP_CURRENT_REF);
                 uint16_t arr = SM_fetchRampARR(ramp_index); //set next step duration
                 __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
                 ramp_index++;
             }
+            else if (ramp_index < RAMP_HOLD_END_ENTRY) //spin in stepper drive for a certain number of steps to stabilize stepper drive waveform
+            {
+				CC_setCurrentReference(RAMP_EXIT_CURRENT);
+				ramp_index++;
+            }
+            else
+            {
+            	run_arr = SM_fetchRampARR(ramp_index);
+                wC_setSpeedReference(run_arr); //TODO: get from pot (?)
+            	run_counter = 2;
+            	force_zero_duty = 0;
+                controlState = RUN;
+            }
             setupFETs();
-            //TODO: startup zero-cross detection validation
-            //TODO: entry condition into RUN state
             
         }
         break;
         case RUN:
         {
-            //TODO: set current reference based on speed control cycle output
+        	run_counter++;
+        	if (run_counter == RUN_W_CONTROL_INTERVAL)
+        	{
+        		run_counter = 0;
+        	}
+
+        	if (run_counter == 0)
+        	{
+        		force_zero_duty = 1;
+        	}
+        	else
+        	{
+        		force_zero_duty = 0;
+        	}
+
+        	if (run_counter == 1)
+        	{
+            	uint32_t new_iref = wC_runSpeedControlCycle(run_arr_adj);
+            	CC_setCurrentReference(new_iref);
+        	}
+
+
             setupFETs();
-            
         }
         break;
     }
@@ -238,9 +306,16 @@ void SM_init()
     HAL_GPIO_WritePin(GPIOB, LOWSIDE_PHASE_C, GPIO_PIN_RESET); // open PHASE_C LS FET
 
     curr_step = 0;
+    arr_set = 1;
     alignment_index = 0;
     ramp_index = 0;
     controlState = ALIGNMENT; //start up in ALIGNMENT
+
+    bemf_check_cnt = 0;
+    force_zero_duty = 0;
+    run_arr = 0;
+    run_counter = 2;
+
     configStep();
 
 }
@@ -254,6 +329,7 @@ void SM_nextStep()
         if (curr_step >= 6) //circular
         {
             curr_step = 0;
+            CC_resetIntegral(); // TODO: how often should integral be reset?
         }
     }
 
@@ -296,16 +372,107 @@ uint32_t SM_getBEMFChannel()
     return currentBemfAdcChannel;
 }
 
+static inline void updateARR(uint16_t ctr)
+{
+	run_arr_adj = ctr + (run_arr >> 1);
+//	__HAL_TIM_SET_AUTORELOAD(&htim2, run_arr_adj);
+	arr_set = 1;
+}
+
 void SM_processBEMF(uint32_t bemf)
 {
-    if (controlState == RUN)
+//	if (controlState == EXIT_RAMP)
+//	{
+//		if (bemf_rising)
+//		{
+//			uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+//			if (ctr == (exit_ramp_arr>>1))
+//			{
+//				if (bemf == 0)
+//				{
+//					zc_half_ok = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//				}
+//			}
+//			else if ((ctr == ((3 * exit_ramp_arr)>>2)) && (zc_half_ok == 1))
+//			{
+//				if (bemf > BEMF_QUARTER_TILL_THRESH)
+//				{
+//					zc_aligned = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//					zc_aligned = 0;
+//				}
+//			}
+//		}
+//		else //bemf falling
+//		{
+//			uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+//			if ((ctr == (exit_ramp_arr>>2)))
+//			{
+//				if (bemf > BEMF_QUARTER_TILL_THRESH)
+//				{
+//					zc_half_ok = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//				}
+//			}
+//			else if ((ctr == (exit_ramp_arr>>1)) && (zc_half_ok == 1))
+//			{
+//				if (bemf == 0)
+//				{
+//					zc_aligned = 1;
+//				}
+//				else
+//				{
+//					zc_half_ok = 0;
+//					zc_aligned = 0;
+//				}
+//			}
+//		}
+//	}
+    if ((controlState == RUN) && (run_counter == 0))
     {
-        /*
-            set ARR
-        */
-          // if(bemf < BEMF_thresh){
-//		__HAL_TIM_SET_AUTORELOAD(&htim2, __HAL_TIM_GET_COUNTER(&htim2) << 1);
-	    //}
+    	uint16_t ctr = __HAL_TIM_GET_COUNTER(&htim2);
+    	if (ctr <= DEMAG_NUM_PERIODS)
+    	{
+    		arr_set = 0;
+    		bemf_check_cnt = 0;
+    		run_arr_adj = ((run_arr * 3)>>1);
+    	}
+    	if (ctr > DEMAG_NUM_PERIODS)
+    	{
+			if ((bemf_rising == 1)&&(arr_set == 0)) //rising BEMF
+			{
+				if (bemf > BEMF_ZC_THRESH)
+				{
+					bemf_check_cnt++;
+				}
+				if (bemf_check_cnt == ZC_DETECTIONS_FOR_VALID)
+				{
+					updateARR(ctr);
+				}
+			}
+			if ((bemf_rising == 0)&&(arr_set == 0)) //falling BEMF
+			{
+				if (bemf < BEMF_ZC_THRESH)
+				{
+					bemf_check_cnt++;
+				}
+				if (bemf_check_cnt == ZC_DETECTIONS_FOR_VALID)
+				{
+					updateARR(ctr);
+				}
+			}
+    	}
+
     }
 }
 
@@ -315,22 +482,34 @@ void SM_updateDuty(uint16_t duty)
     switch (curr_step)
     {
         case 0:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+            __disable_irq();
+            (&htim1)->Instance->CCR3 = duty;
+            __enable_irq();
         break;
         case 1:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+            __disable_irq();
+            (&htim1)->Instance->CCR1 = duty;
+            __enable_irq();
         break;
         case 2:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_A, duty); 
+        	__disable_irq();
+            (&htim1)->Instance->CCR1 = duty;
+            __enable_irq();
         break;
         case 3:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+        	__disable_irq();
+            (&htim1)->Instance->CCR2 = duty;
+            __enable_irq();
         break;
         case 4:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_B, duty); 
+        	__disable_irq();
+            (&htim1)->Instance->CCR2 = duty;
+            __enable_irq();
         break;
         case 5:
-            __HAL_TIM_SET_COMPARE(&htim1, HIGHSIDE_PHASE_C, duty); 
+        	__disable_irq();
+            (&htim1)->Instance->CCR3 = duty;
+            __enable_irq();
         break;
     }
 }

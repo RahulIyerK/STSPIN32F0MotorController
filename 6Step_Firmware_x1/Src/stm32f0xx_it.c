@@ -45,9 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern double isamp, iref, bemf_estimation, motor_vsupply;
-extern uint32_t c_counter;
-extern uint32_t c_tim[200];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
